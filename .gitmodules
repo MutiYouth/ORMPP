@@ -1,0 +1,4 @@
+[submodule "thirdparty/iguana"]
+	path = thirdparty/iguana
+	url = https://github.com/qicosmos/iguana.git
+	branch = master

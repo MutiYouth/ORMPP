@@ -2,37 +2,49 @@ cmake_minimum_required(VERSION 3.2)
 project(ormpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17")
-SET(ENABLE_MYSQL ON)
-SET(ENABLE_PG OFF)
-SET(ENABLE_SQLITE3 OFF)
+set(ENABLE_MYSQL ON)
+set(ENABLE_PG OFF)
+set(ENABLE_SQLITE3 OFF)
+
+set(SOURCE_FILES
+        src/main.cpp
+        src/dbng.hpp
+        src/unit_test.hpp
+        src/pg_types.h
+        src/type_mapping.hpp
+        src/utility.hpp
+        src/entity.hpp
+        src/connection_pool.hpp
+        src/ormpp_cfg.hpp)
 if (ENABLE_MYSQL)
-add_definitions(-DORMPP_ENABLE_MYSQL)
-set(SOURCE_FILES main.cpp dbng.hpp unit_test.hpp pg_types.h
-        type_mapping.hpp utility.hpp entity.hpp mysql.hpp
-        connection_pool.hpp ormpp_cfg.hpp)
-endif()
+    add_definitions(-DORMPP_ENABLE_MYSQL)
+    list(APPEND SOURCE_FILES src/mysql.hpp)
+endif ()
+
 if (ENABLE_SQLITE3)
-add_definitions(-DORMPP_ENABLE_SQLITE3)
-set(SOURCE_FILES main.cpp dbng.hpp unit_test.hpp pg_types.h
-        type_mapping.hpp utility.hpp entity.hpp  sqlite.hpp connection_pool.hpp ormpp_cfg.hpp)
-endif()
+    add_definitions(-DORMPP_ENABLE_SQLITE3)
+    list(APPEND SOURCE_FILES src/sqlite.hpp)
+endif ()
+
 if (ENABLE_PG)
-add_definitions(-DORMPP_ENABLE_PG)
-set(SOURCE_FILES main.cpp dbng.hpp unit_test.hpp pg_types.h
-        type_mapping.hpp utility.hpp entity.hpp  postgresql.hpp connection_pool.hpp ormpp_cfg.hpp)
-endif()
+    add_definitions(-DORMPP_ENABLE_PG)
+    list(APPEND SOURCE_FILES src/postgresql.hpp)
+endif ()
 
-INCLUDE_DIRECTORIES(
-                    ${CMAKE_SOURCE_DIR}/iguana
-                   )
 
+
+
+include_directories(
+    ${CMAKE_SOURCE_DIR}/thirdparty/iguana
+)
 add_executable(ormpp ${SOURCE_FILES})
+
 if (ENABLE_MYSQL)
-target_link_libraries(ormpp mysqlclient)
-endif()
+    target_link_libraries(ormpp mysqlclient)
+endif ()
 if (ENABLE_SQLITE3)
-target_link_libraries(ormpp sqlite3)
-endif()
+    target_link_libraries(ormpp sqlite3)
+endif ()
 if (ENABLE_PG)
-target_link_libraries(ormpp pq)
-endif()
+    target_link_libraries(ormpp pq)
+endif ()
