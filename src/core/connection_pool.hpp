@@ -76,6 +76,7 @@ public:
 private:
   template<typename... Args>
   void init_impl(int maxsize, Args &&...args) {
+    // weng todo_done: fix the line. 22.8.21
     args_ = std::make_tuple(std::forward<Args>(args)...);
 
     for (int i = 0; i < maxsize; ++i) {
@@ -105,7 +106,7 @@ private:
   std::mutex mutex_;
   std::condition_variable condition_;
   std::once_flag flag_;
-  std::tuple<const char *, const char *, const char *, const char *, int, int> args_;
+  std::tuple<const char *, const char *, const char *, const char *, int> args_;  // std::tuple<const char *, const char *, const char *, const char *, int, int>
 };
 
 

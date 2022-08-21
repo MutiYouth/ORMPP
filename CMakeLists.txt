@@ -9,13 +9,14 @@ set(ENABLE_SQLITE3 OFF)
 set(SOURCE_FILES
         src/core/main.cpp
         src/core/dbng.hpp
-        src/examples/unit_test.hpp
-        src/dbs/pg_types.h
         src/core/type_mapping.hpp
         src/core/utility.hpp
         src/core/entity.hpp
         src/core/connection_pool.hpp
-        src/core/ormpp_cfg.hpp)
+        src/core/ormpp_cfg.hpp
+        src/examples/unit_test.hpp
+        src/dbs/pg_types.h
+        )
 if (ENABLE_MYSQL)
     add_definitions(-DORMPP_ENABLE_MYSQL)
     list(APPEND SOURCE_FILES src/dbs/mysql.hpp)

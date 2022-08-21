@@ -13,7 +13,6 @@
 namespace ormpp {
 struct ormpp_cfg
 {
-
   std::string db_ip;
   std::string user_name;
   std::string pwd;

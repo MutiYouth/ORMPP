@@ -7,18 +7,27 @@
 
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #ifdef _MSC_VER
 #include <include/libpq-fe.h>
 #else
 
 #include <postgresql/libpq-fe.h>
+#include <climits>
+#include "iguana/reflection.hpp"
+#include "../core/entity.hpp"
+#include "../core/utility.hpp"
 
 #endif
+
+
+
 
 using namespace std::string_literals;
 
 namespace ormpp {
+
 class postgresql
 {
 public:
@@ -72,7 +81,7 @@ public:
     //
     //            PQclear(res_);
 
-    std::string sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
+    auto sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
     res_ = PQexec(con_, sql.data());
     if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
       std::cout << PQerrorMessage(con_) << std::endl;
@@ -87,7 +96,7 @@ public:
   template<typename T, typename... Args>
   constexpr int insert(const T &t, Args &&...args) {
     //            std::string sql = generate_pq_insert_sql<T>(false);
-    std::string sql = generate_auto_insert_sql<T>(false);
+    auto sql = generate_auto_insert_sql<T>(false);
     if (!prepare<T>(sql))
       return INT_MIN;
 
@@ -97,7 +106,7 @@ public:
   template<typename T, typename... Args>
   constexpr int insert(const std::vector<T> &v, Args &&...args) {
     //            std::string sql = generate_pq_insert_sql<T>(false);
-    std::string sql = generate_auto_insert_sql<T>(false);
+    auto sql = generate_auto_insert_sql<T>(false);
 
     if (!begin())
       return INT_MIN;
@@ -178,11 +187,8 @@ public:
   }
 
   template<typename T, typename... Args>
-  constexpr std::enable_if_t<iguana::is_reflection_v < T>, std::vector<T>>
-  query(
-  Args &&...args
-  ) {
-    std::string sql = generate_query_sql<T>(std::forward<Args>(args)...);
+  constexpr std::enable_if_t<iguana::is_reflection_v < T>, std::vector<T>> query(Args &&...args) {
+    auto sql = generate_query_sql<T>(std::forward<Args>(args)...);
     constexpr auto SIZE = iguana::get_value<T>();
 
     if (!prepare<T>(sql))
@@ -211,10 +217,7 @@ public:
   }
 
   template<typename T, typename Arg, typename... Args>
-  constexpr std::enable_if_t<!iguana::is_reflection_v < T>, std::vector<T>>
-  query(
-  const Arg &s, Args
-  &&...args) {
+  std::enable_if_t<!iguana::is_reflection_v < T>, std::vector<T>>query(const Arg &s, Args &&...args) {
     static_assert(iguana::is_tuple<T>::value);
     constexpr auto SIZE = std::tuple_size_v<T>;
 
@@ -485,8 +488,7 @@ private:
 
   template<typename T>
   bool prepare(const std::string &sql) {
-    res_ =
-        PQprepare(con_, "", sql.data(), (int) iguana::get_value<T>(), nullptr);
+    res_ = PQprepare(con_, "", sql.data(), (int) iguana::get_value<T>(), nullptr);
     if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
       std::cout << PQresultErrorMessage(res_) << std::endl;
       PQclear(res_);
@@ -518,14 +520,12 @@ private:
   }
 
   template<typename T, typename... Args>
-  constexpr int insert_impl(const std::string &sql, const T &t,
-                            Args &&...args) {
+  int insert_impl(const std::string &sql, const T &t, Args &&...args) {
     std::vector<std::vector<char>> param_values;
     auto it = auto_key_map_.find(iguana::get_name<T>().data());
     std::string auto_key = (it == auto_key_map_.end()) ? "" : it->second;
 
-    iguana::for_each(t,
-                     [&t, &param_values, &auto_key, this](auto item, auto i) {
+    iguana::for_each(t, [&t, &param_values, &auto_key, this](auto item, auto i) {
                        /*if(!auto_key.empty()&&auto_key==iguana::get_name<T>(decltype(i)::value).data())
                            return;*/
                        set_param_values(param_values, t.*item);
@@ -554,7 +554,7 @@ private:
   }
 
   template<typename T>
-  constexpr void set_param_values(std::vector<std::vector<char>> &param_values,
+  void set_param_values(std::vector<std::vector<char>> &param_values,
                                   T &&value) {
     using U = std::remove_const_t<std::remove_reference_t<T>>;
     if constexpr (std::is_integral_v<U> && !iguana::is_int64_v < U >) {
@@ -614,7 +614,7 @@ private:
   }
 
   template<typename T, typename... Args>
-  constexpr std::string get_condition(const T &t, const std::string &key,
+  std::string get_condition(const T &t, const std::string &key,
                                       Args &&...args) {
     std::string result = "";
     constexpr auto SIZE = iguana::get_value<T>();
@@ -707,5 +707,6 @@ private:
   std::map<std::string, std::string> auto_key_map_;
   std::map<std::string, std::string> key_map_;
 };
+
 } // namespace ormpp
 #endif // ORM_POSTGRESQL_HPP

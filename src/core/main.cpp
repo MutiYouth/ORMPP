@@ -14,14 +14,14 @@
 #include <thread>
 
 #ifdef ORMPP_ENABLE_MYSQL
-#include "dbs/mysql.hpp"
+#include "../dbs/mysql.hpp"
 #endif
 #ifdef ORMPP_ENABLE_SQLITE3
-#include "sqlite.hpp"
+#include "../dbs/sqlite.hpp"
 #endif
 #ifdef ORMPP_ENABLE_PG
 
-#include "postgresql.hpp"
+#include "../dbs/postgresql.hpp"
 
 #endif
 
@@ -117,6 +117,7 @@ struct dummy
 };
 REFLECTION(dummy, id, name);
 
+#ifdef ORMPP_ENABLE_MYSQL
 TEST_CASE(mysql_exist_tb) {
   dbng<mysql> mysql;
   TEST_REQUIRE(mysql.connect(ip, "root", "12345", "testdb", /*timeout_seconds=*/5, 3306));
@@ -157,6 +158,7 @@ TEST_CASE(mysql_pool) {
   //        bool r = conn->create_datatable<person>();
   //    }
 }
+#endif
 
 TEST_CASE(test_ormpp_cfg) {
   ormpp_cfg cfg{};
@@ -220,7 +222,6 @@ TEST_CASE(postgres_pool) {
     bool r = conn->create_datatable<person>();
   }
 }
-
 #endif
 
 TEST_CASE(orm_connect) {
@@ -670,7 +671,7 @@ TEST_CASE(orm_query_multi_table) {
   TEST_CHECK(postgres.insert(v) == 3);
   TEST_REQUIRE(postgres.create_datatable<person>(key1, not_null));
   TEST_CHECK(postgres.insert(v1) == 3);
-  TEST_CHECK(sqlite.insert(v1) == 3);
+  TEST_CHECK(postgres.insert(v1) == 3);
   auto result1 = postgres.query<std::tuple<int, std::string, double>>(
       "select person.*, student.name, student.age from person, student"s);
   TEST_CHECK(result1.size() == 9);
