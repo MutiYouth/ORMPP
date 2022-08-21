@@ -13,16 +13,21 @@
 #ifdef ORMPP_ENABLE_SQLITE3
 #include <sqlite3.h>
 #endif
-#include "pg_types.h"
+
+#include "../dbs/pg_types.h"
 #include <string>
 #include <string_view>
+
 using namespace std::string_view_literals;
 
 #ifndef EXAMPLE1_TYPE_MAPPING_HPP
 #define EXAMPLE1_TYPE_MAPPING_HPP
 
 namespace ormpp {
-template <class T> struct identity {};
+template<class T>
+struct identity
+{
+};
 
 #define REGISTER_TYPE(Type, Index)                                             \
   inline constexpr int type_to_id(identity<Type>) noexcept { return Index; }   \
@@ -119,14 +124,23 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
 #ifdef ORMPP_ENABLE_PG
 namespace ormpp_postgresql {
 REGISTER_TYPE(bool, BOOLOID)
+
 REGISTER_TYPE(char, CHAROID)
+
 REGISTER_TYPE(short, INT2OID)
+
 REGISTER_TYPE(int, INT4OID)
+
 REGISTER_TYPE(float, FLOAT4OID)
+
 REGISTER_TYPE(double, FLOAT8OID)
+
 REGISTER_TYPE(int64_t, INT8OID)
 
-inline int type_to_id(identity<std::string>) noexcept { return TEXTOID; }
+inline int type_to_id(identity<std::string>) noexcept {
+  return TEXTOID;
+}
+
 inline std::string
 id_to_type(std::integral_constant<std::size_t, TEXTOID>) noexcept {
   std::string res{};
@@ -136,24 +150,36 @@ id_to_type(std::integral_constant<std::size_t, TEXTOID>) noexcept {
 inline constexpr auto type_to_name(identity<bool>) noexcept {
   return "integer"sv;
 }
-inline constexpr auto type_to_name(identity<char>) noexcept { return "char"sv; }
+
+inline constexpr auto type_to_name(identity<char>) noexcept {
+  return "char"sv;
+}
+
 inline constexpr auto type_to_name(identity<short>) noexcept {
   return "smallint"sv;
 }
+
 inline constexpr auto type_to_name(identity<int>) noexcept {
   return "integer"sv;
 }
+
 inline constexpr auto type_to_name(identity<float>) noexcept {
   return "real"sv;
 }
+
 inline constexpr auto type_to_name(identity<double>) noexcept {
   return "double precision"sv;
 }
+
 inline constexpr auto type_to_name(identity<int64_t>) noexcept {
   return "bigint"sv;
 }
-inline auto type_to_name(identity<std::string>) noexcept { return "text"sv; }
-template <size_t N>
+
+inline auto type_to_name(identity<std::string>) noexcept {
+  return "text"sv;
+}
+
+template<size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
   std::string s = "varchar(" + std::to_string(N) + ")";
   return s;

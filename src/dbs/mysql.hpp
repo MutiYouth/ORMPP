@@ -4,9 +4,10 @@
 
 #ifndef ORM_MYSQL_HPP
 #define ORM_MYSQL_HPP
-#include "entity.hpp"
-#include "type_mapping.hpp"
-#include "utility.hpp"
+
+#include "../core/entity.hpp"
+#include "../core/type_mapping.hpp"
+#include "../core/utility.hpp"
 #include <climits>
 #include <list>
 #include <map>
@@ -15,11 +16,15 @@
 
 namespace ormpp {
 
-class mysql {
+class mysql
+{
 public:
-  ~mysql() { disconnect(); }
+  ~mysql() {
+    disconnect();
+  }
 
-  template <typename... Args> bool connect(Args &&...args) {
+  template<typename... Args>
+  bool connect(Args &&...args) {
     if (con_ != nullptr) {
       mysql_close(con_);
     }
@@ -57,11 +62,16 @@ public:
     std::cout << last_error_ << std::endl; // todo, write to log file
   }
 
-  std::string get_last_error() const { return last_error_; }
+  std::string get_last_error() const {
+    return last_error_;
+  }
 
-  bool ping() { return mysql_ping(con_) == 0; }
+  bool ping() {
+    return mysql_ping(con_) == 0;
+  }
 
-  template <typename... Args> bool disconnect(Args &&...args) {
+  template<typename... Args>
+  bool disconnect(Args &&...args) {
     if (con_ != nullptr) {
       mysql_close(con_);
       con_ = nullptr;
@@ -70,7 +80,7 @@ public:
     return true;
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr bool create_datatable(Args &&...args) {
     std::string sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
     sql += " DEFAULT CHARSET=utf8";
@@ -82,41 +92,41 @@ public:
     return true;
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr int insert(const std::vector<T> &t, Args &&...args) {
     auto name = get_name<T>();
     std::string sql = auto_key_map_[name].empty()
-                          ? generate_insert_sql<T>(false)
-                          : generate_auto_insert_sql<T>(auto_key_map_, false);
+                      ? generate_insert_sql<T>(false)
+                      : generate_auto_insert_sql<T>(auto_key_map_, false);
 
     return insert_impl(sql, t, std::forward<Args>(args)...);
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr int update(const std::vector<T> &t, Args &&...args) {
     std::string sql = generate_insert_sql<T>(true);
 
     return insert_impl(sql, t, std::forward<Args>(args)...);
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr int insert(const T &t, Args &&...args) {
     // insert into person values(?, ?, ?);
     auto name = get_name<T>();
     std::string sql = auto_key_map_[name].empty()
-                          ? generate_insert_sql<T>(false)
-                          : generate_auto_insert_sql<T>(auto_key_map_, false);
+                      ? generate_insert_sql<T>(false)
+                      : generate_auto_insert_sql<T>(auto_key_map_, false);
 
     return insert_impl(sql, t, std::forward<Args>(args)...);
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr int update(const T &t, Args &&...args) {
     std::string sql = generate_insert_sql<T>(true);
     return insert_impl(sql, t, std::forward<Args>(args)...);
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr bool delete_records(Args &&...where_conditon) {
     auto sql = generate_delete_sql<T>(std::forward<Args>(where_conditon)...);
     if (mysql_query(con_, sql.data())) {
@@ -127,10 +137,12 @@ public:
     return true;
   }
 
-  int get_last_affect_rows() { return (int)mysql_affected_rows(con_); }
+  int get_last_affect_rows() {
+    return (int) mysql_affected_rows(con_);
+  }
 
   // for tuple and string with args...
-  template <typename T, typename Arg, typename... Args>
+  template<typename T, typename Arg, typename... Args>
   constexpr std::enable_if_t<!iguana::is_reflection_v<T>, std::vector<T>>
   query(const Arg &s, Args &&...args) {
     static_assert(iguana::is_tuple<T>::value);
@@ -153,7 +165,7 @@ public:
       return {};
     }
 
-    if (mysql_stmt_prepare(stmt_, sql.c_str(), (int)sql.size())) {
+    if (mysql_stmt_prepare(stmt_, sql.c_str(), (int) sql.size())) {
       fprintf(stderr, "%s\n", mysql_error(con_));
       has_error_ = true;
       return {};
@@ -174,48 +186,54 @@ public:
           using U = std::remove_reference_t<decltype(item)>;
           if constexpr (std::is_arithmetic_v<U>) {
             param_binds[index].buffer_type =
-                (enum_field_types)ormpp_mysql::type_to_id(identity<U>{});
+                (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
             param_binds[index].buffer = &item;
             index++;
-          } else if constexpr (std::is_same_v<std::string, U>) {
+          }
+          else if constexpr (std::is_same_v<std::string, U>) {
             std::vector<char> tmp(65536, 0);
             mp.emplace_back(std::move(tmp));
             param_binds[index].buffer_type = MYSQL_TYPE_STRING;
             param_binds[index].buffer = &(mp.back()[0]);
             param_binds[index].buffer_length = 65536;
             index++;
-          } else if constexpr (iguana::is_reflection_v<U>) {
+          }
+          else if constexpr (iguana::is_reflection_v<U>) {
             iguana::for_each(item, [&param_binds, &mp, &item, &index](auto &ele,
                                                                       auto i) {
               using U =
                   std::remove_reference_t<decltype(std::declval<U>().*ele)>;
               if constexpr (std::is_arithmetic_v<U>) {
                 param_binds[index].buffer_type =
-                    (enum_field_types)ormpp_mysql::type_to_id(identity<U>{});
+                    (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
                 param_binds[index].buffer = &(item.*ele);
-              } else if constexpr (std::is_same_v<std::string, U>) {
+              }
+              else if constexpr (std::is_same_v<std::string, U>) {
                 std::vector<char> tmp(65536, 0);
                 mp.emplace_back(std::move(tmp));
                 param_binds[index].buffer_type = MYSQL_TYPE_STRING;
                 param_binds[index].buffer = &(mp.back()[0]);
                 param_binds[index].buffer_length = 65536;
-              } else if constexpr (is_char_array_v<U>) {
+              }
+              else if constexpr (is_char_array_v<U>) {
                 std::vector<char> tmp(sizeof(U), 0);
                 mp.emplace_back(std::move(tmp));
                 param_binds[index].buffer_type = MYSQL_TYPE_VAR_STRING;
                 param_binds[index].buffer = &(mp.back()[0]);
-                param_binds[index].buffer_length = (unsigned long)sizeof(U);
+                param_binds[index].buffer_length = (unsigned long) sizeof(U);
               }
               index++;
             });
-          } else if constexpr (is_char_array_v<U>) {
+          }
+          else if constexpr (is_char_array_v<U>) {
             param_binds[index].buffer_type = MYSQL_TYPE_VAR_STRING;
             std::vector<char> tmp(sizeof(U), 0);
             mp.emplace_back(std::move(tmp));
             param_binds[index].buffer = &(mp.back()[0]);
-            param_binds[index].buffer_length = (unsigned long)sizeof(U);
+            param_binds[index].buffer_length = (unsigned long) sizeof(U);
             index++;
-          } else {
+          }
+          else {
             std::cout << typeid(U).name() << std::endl;
           }
         },
@@ -242,16 +260,19 @@ public:
             if constexpr (std::is_same_v<std::string, U>) {
               item = std::string(&(*it)[0], strlen((*it).data()));
               it++;
-            } else if constexpr (is_char_array_v<U>) {
+            }
+            else if constexpr (is_char_array_v<U>) {
               memcpy(item, &(*it)[0], sizeof(U));
-            } else if constexpr (iguana::is_reflection_v<U>) {
+            }
+            else if constexpr (iguana::is_reflection_v<U>) {
               iguana::for_each(item, [&it, &item](auto ele, auto i) {
                 using V =
                     std::remove_reference_t<decltype(std::declval<U>().*ele)>;
                 if constexpr (std::is_same_v<std::string, V>) {
                   item.*ele = std::string(&(*it)[0], strlen((*it).data()));
                   it++;
-                } else if constexpr (is_char_array_v<V>) {
+                }
+                else if constexpr (is_char_array_v<V>) {
                   memcpy(item.*ele, &(*it)[0], sizeof(V));
                 }
               });
@@ -267,7 +288,7 @@ public:
   }
 
   // if there is a sql error, how to tell the user? throw exception?
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>>
   query(Args &&...args) {
     std::string sql = generate_query_sql<T>(args...);
@@ -279,7 +300,7 @@ public:
       return {};
     }
 
-    if (mysql_stmt_prepare(stmt_, sql.c_str(), (unsigned long)sql.size())) {
+    if (mysql_stmt_prepare(stmt_, sql.c_str(), (unsigned long) sql.size())) {
       has_error_ = true;
       return {};
     }
@@ -297,22 +318,24 @@ public:
       using U = std::remove_reference_t<decltype(std::declval<T>().*item)>;
       if constexpr (std::is_arithmetic_v<U>) {
         param_binds[Idx].buffer_type =
-            (enum_field_types)ormpp_mysql::type_to_id(identity<U>{});
+            (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
         param_binds[Idx].buffer = &(t.*item);
         index++;
-      } else if constexpr (std::is_same_v<std::string, U>) {
+      }
+      else if constexpr (std::is_same_v<std::string, U>) {
         param_binds[Idx].buffer_type = MYSQL_TYPE_STRING;
         std::vector<char> tmp(65536, 0);
         mp.emplace(decltype(i)::value, tmp);
         param_binds[Idx].buffer = &(mp.rbegin()->second[0]);
-        param_binds[Idx].buffer_length = (unsigned long)tmp.size();
+        param_binds[Idx].buffer_length = (unsigned long) tmp.size();
         index++;
-      } else if constexpr (is_char_array_v<U>) {
+      }
+      else if constexpr (is_char_array_v<U>) {
         param_binds[Idx].buffer_type = MYSQL_TYPE_VAR_STRING;
         std::vector<char> tmp(sizeof(U), 0);
         mp.emplace(decltype(i)::value, tmp);
         param_binds[Idx].buffer = &(mp.rbegin()->second[0]);
-        param_binds[Idx].buffer_length = (unsigned long)sizeof(U);
+        param_binds[Idx].buffer_length = (unsigned long) sizeof(U);
         index++;
       }
     });
@@ -339,13 +362,14 @@ public:
         if constexpr (std::is_same_v<std::string, U>) {
           auto &vec = mp[decltype(i)::value];
           t.*item = std::string(&vec[0], strlen(vec.data()));
-        } else if constexpr (is_char_array_v<U>) {
+        }
+        else if constexpr (is_char_array_v<U>) {
           auto &vec = mp[decltype(i)::value];
           memcpy(t.*item, vec.data(), vec.size());
         }
       });
 
-      for (auto &p : mp) {
+      for (auto &p: mp) {
         p.second.assign(p.second.size(), 0);
       }
 
@@ -361,7 +385,9 @@ public:
     return v;
   }
 
-  bool has_error() { return has_error_; }
+  bool has_error() {
+    return has_error_;
+  }
 
   // just support execute string sql without placeholders
   bool execute(const std::string &sql) {
@@ -402,7 +428,7 @@ public:
   }
 
 private:
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   std::string generate_createtb_sql(Args &&...args) {
     const auto type_name_arr = get_type_names<T>(DBType::mysql);
     auto name = get_name<T>();
@@ -429,11 +455,12 @@ private:
       for_each0(
           tp,
           [&sql, &i, &has_add_field, field_name, type_name_arr, name,
-           this](auto item) {
+              this](auto item) {
             if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
               if (item.fields.find(field_name.data()) == item.fields.end())
                 return;
-            } else {
+            }
+            else {
               if (item.fields != field_name.data())
                 return;
             }
@@ -444,14 +471,16 @@ private:
               }
               append(sql, " NOT NULL");
               has_add_field = true;
-            } else if constexpr (std::is_same_v<decltype(item), ormpp_key>) {
+            }
+            else if constexpr (std::is_same_v<decltype(item), ormpp_key>) {
               if (!has_add_field) {
                 append(sql, field_name.data(), " ", type_name_arr[i]);
               }
               append(sql, " PRIMARY KEY");
               has_add_field = true;
-            } else if constexpr (std::is_same_v<decltype(item),
-                                                ormpp_auto_key>) {
+            }
+            else if constexpr (std::is_same_v<decltype(item),
+                ormpp_auto_key>) {
               if (!has_add_field) {
                 append(sql, field_name.data(), " ", type_name_arr[i]);
               }
@@ -459,14 +488,16 @@ private:
               append(sql, " PRIMARY KEY");
               auto_key_map_[name.data()] = item.fields;
               has_add_field = true;
-            } else if constexpr (std::is_same_v<decltype(item), ormpp_unique>) {
+            }
+            else if constexpr (std::is_same_v<decltype(item), ormpp_unique>) {
               if (!has_add_field) {
                 append(sql, field_name.data(), " ", type_name_arr[i]);
               }
 
               append(sql, ", UNIQUE(", item.fields, ")");
               has_add_field = true;
-            } else {
+            }
+            else {
               append(sql, field_name.data(), " ", type_name_arr[i]);
             }
           },
@@ -485,7 +516,7 @@ private:
     return sql;
   }
 
-  template <typename T>
+  template<typename T>
   constexpr void set_param_bind(std::vector<MYSQL_BIND> &param_binds,
                                 T &&value) {
     MYSQL_BIND param = {};
@@ -493,22 +524,25 @@ private:
     using U = std::remove_const_t<std::remove_reference_t<T>>;
     if constexpr (std::is_arithmetic_v<U>) {
       param.buffer_type =
-          (enum_field_types)ormpp_mysql::type_to_id(identity<U>{});
+          (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
       param.buffer = const_cast<void *>(static_cast<const void *>(&value));
-    } else if constexpr (std::is_same_v<std::string, U>) {
+    }
+    else if constexpr (std::is_same_v<std::string, U>) {
       param.buffer_type = MYSQL_TYPE_STRING;
-      param.buffer = (void *)(value.c_str());
-      param.buffer_length = (unsigned long)value.size();
-    } else if constexpr (std::is_same_v<const char *, U> ||
-                         is_char_array_v<U>) {
+      param.buffer = (void *) (value.c_str());
+      param.buffer_length = (unsigned long) value.size();
+    }
+    else if constexpr (std::is_same_v<const char *, U> ||
+                       is_char_array_v<U>) {
       param.buffer_type = MYSQL_TYPE_STRING;
-      param.buffer = (void *)(value);
-      param.buffer_length = (unsigned long)strlen(value);
+      param.buffer = (void *) (value);
+      param.buffer_length = (unsigned long) strlen(value);
     }
     param_binds.push_back(param);
   }
 
-  template <typename T> int stmt_execute(const T &t) {
+  template<typename T>
+  int stmt_execute(const T &t) {
     std::vector<MYSQL_BIND> param_binds;
     auto it = auto_key_map_.find(get_name<T>());
     std::string auto_key = (it == auto_key_map_.end()) ? "" : it->second;
@@ -531,7 +565,7 @@ private:
       return INT_MIN;
     }
 
-    int count = (int)mysql_stmt_affected_rows(stmt_);
+    int count = (int) mysql_stmt_affected_rows(stmt_);
     if (count == 0) {
       return INT_MIN;
     }
@@ -539,10 +573,15 @@ private:
     return count;
   }
 
-  struct guard_statment {
-    guard_statment(MYSQL_STMT *stmt) : stmt_(stmt) {}
+
+  struct guard_statment
+  {
+    guard_statment(MYSQL_STMT *stmt) : stmt_(stmt) {
+    }
+
     MYSQL_STMT *stmt_ = nullptr;
     int status_ = 0;
+
     ~guard_statment() {
       if (stmt_ != nullptr)
         status_ = mysql_stmt_close(stmt_);
@@ -552,14 +591,15 @@ private:
     }
   };
 
-  template <typename T, typename... Args>
+
+  template<typename T, typename... Args>
   constexpr int insert_impl(const std::string &sql, const T &t,
                             Args &&...args) {
     stmt_ = mysql_stmt_init(con_);
     if (!stmt_)
       return INT_MIN;
 
-    if (mysql_stmt_prepare(stmt_, sql.c_str(), (int)sql.size())) {
+    if (mysql_stmt_prepare(stmt_, sql.c_str(), (int) sql.size())) {
       return INT_MIN;
     }
 
@@ -571,14 +611,14 @@ private:
     return 1;
   }
 
-  template <typename T, typename... Args>
+  template<typename T, typename... Args>
   constexpr int insert_impl(const std::string &sql, const std::vector<T> &t,
                             Args &&...args) {
     stmt_ = mysql_stmt_init(con_);
     if (!stmt_)
       return INT_MIN;
 
-    if (mysql_stmt_prepare(stmt_, sql.c_str(), (int)sql.size())) {
+    if (mysql_stmt_prepare(stmt_, sql.c_str(), (int) sql.size())) {
       return INT_MIN;
     }
 
@@ -589,7 +629,7 @@ private:
     if (!b)
       return INT_MIN;
 
-    for (auto &item : t) {
+    for (auto &item: t) {
       int r = stmt_execute(item);
       if (r == INT_MIN) {
         rollback();
@@ -598,10 +638,11 @@ private:
     }
     b = commit();
 
-    return b ? (int)t.size() : INT_MIN;
+    return b ? (int) t.size() : INT_MIN;
   }
 
-  template <typename... Args> auto get_tp(int &timeout, Args &&...args) {
+  template<typename... Args>
+  auto get_tp(int &timeout, Args &&...args) {
     auto tp = std::make_tuple(con_, std::forward<Args>(args)...);
     if constexpr (sizeof...(Args) == 5) {
       auto [c, s1, s2, s3, s4, i] = tp;
@@ -615,7 +656,7 @@ private:
     }
     else {
       return std::tuple_cat(tp, std::make_tuple(0, nullptr, 0));
-    } 
+    }
   }
 
 private:

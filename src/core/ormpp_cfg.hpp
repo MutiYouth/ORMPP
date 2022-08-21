@@ -6,12 +6,13 @@
 #define ORMPP_CONFIG_MANAGER_HPP
 
 #include <fstream>
-#include <iguana/json.hpp>
+#include "iguana/json.hpp"
 #include <string>
 #include <string_view>
 
 namespace ormpp {
-struct ormpp_cfg {
+struct ormpp_cfg
+{
 
   std::string db_ip;
   std::string user_name;
@@ -23,6 +24,7 @@ struct ormpp_cfg {
 };
 REFLECTION(ormpp_cfg, db_ip, user_name, pwd, db_name, timeout, db_conn_num, db_port);
 
+
 /*
         int max_thread_num = config_manager::get<int>("max_thread_num",
    "ormpp.cfg"); std::string log_path =
@@ -31,11 +33,12 @@ REFLECTION(ormpp_cfg, db_ip, user_name, pwd, db_name, timeout, db_conn_num, db_p
         config_manager::set("max_thread_num", 6, "ormpp.cfg");
         config_manager::set("log_path", std::string("/tmp/"), "ormpp.cfg");
         */
-class config_manager {
+class config_manager
+{
 public:
   config_manager() = delete;
 
-  template <typename T>
+  template<typename T>
   inline static T get(std::string_view key, std::string_view file_path) {
     ormpp_cfg cfg{};
     bool r = from_file(cfg, file_path);
@@ -60,7 +63,7 @@ public:
     return val;
   }
 
-  template <typename T>
+  template<typename T>
   inline static bool set(std::string_view key, T &&val,
                          std::string_view file_path) {
     ormpp_cfg cfg{};
@@ -83,7 +86,7 @@ public:
     return to_file(cfg, file_path);
   }
 
-  template <typename T>
+  template<typename T>
   inline static bool from_file(T &t, std::string_view file_path) {
     std::ifstream in(file_path.data(), std::ios::binary);
     if (!in.is_open()) {
@@ -91,7 +94,7 @@ public:
     }
 
     in.seekg(0, std::ios::end);
-    size_t len = (size_t)in.tellg();
+    size_t len = (size_t) in.tellg();
     in.seekg(0);
     std::string str;
     str.resize(len);
@@ -106,13 +109,14 @@ public:
     return true;
   }
 
-  template <typename T, typename U> inline static void assign(T &t, U &u) {
+  template<typename T, typename U>
+  inline static void assign(T &t, U &u) {
     if constexpr (std::is_same_v<U, T>) {
       t = u;
     }
   }
 
-  template <typename T>
+  template<typename T>
   inline static bool to_file(T &t, std::string_view file_path) {
     iguana::string_stream ss;
     iguana::json::to_json(ss, t);

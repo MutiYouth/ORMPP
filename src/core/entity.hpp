@@ -3,22 +3,27 @@
 //
 #ifndef ORM_ENTITY_HPP
 #define ORM_ENTITY_HPP
+
 #include <set>
 #include <string>
 
-struct ormpp_not_null {
+struct ormpp_not_null
+{
   std::set<std::string> fields;
 };
 
-struct ormpp_key {
+struct ormpp_key
+{
   std::string fields;
 };
 
-struct ormpp_auto_key {
+struct ormpp_auto_key
+{
   std::string fields;
 };
 
-struct ormpp_unique {
+struct ormpp_unique
+{
   std::string fields;
 };
 

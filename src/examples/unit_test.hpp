@@ -1,22 +1,32 @@
 #pragma once
+
 #include <csignal>
 #include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
 
-struct BaseCase {
+
+struct BaseCase
+{
   virtual void run() = 0;
   virtual void abort() = 0;
   virtual bool isAborted() = 0;
   virtual ~BaseCase() = default;
 };
 
-struct AbortThisCase {};
 
-class UnitTest {
+struct AbortThisCase
+{
+};
+
+
+class UnitTest
+{
 private:
-  UnitTest() : last_checked_line_{0}, failure_num_{0}, current_case_{nullptr} {}
+  UnitTest() : last_checked_line_{0}, failure_num_{0}, current_case_{nullptr} {
+  }
+
   std::vector<BaseCase *> test_cases_;
   std::string last_checked_file_;
   size_t last_checked_line_;
@@ -32,15 +42,19 @@ public:
   void runAll() {
     std::cout << ">>> running " << test_cases_.size() << " tests..."
               << std::endl;
-    for (BaseCase *test : test_cases_) {
+    for (BaseCase *test: test_cases_) {
       current_case_ = test;
       current_case_->run();
     }
   }
 
-  BaseCase *currentCase() { return current_case_; }
+  BaseCase *currentCase() {
+    return current_case_;
+  }
 
-  void registerTestCase(BaseCase *test) { test_cases_.push_back(test); }
+  void registerTestCase(BaseCase *test) {
+    test_cases_.push_back(test);
+  }
 
   void printLastCheckedPoint() {
     std::cout << ">>> ";
@@ -48,16 +62,27 @@ public:
               << ": last checkpoint" << std::endl;
   }
 
-  void checkFile(const std::string &file) { last_checked_file_ = file; }
+  void checkFile(const std::string &file) {
+    last_checked_file_ = file;
+  }
 
-  void checkLine(size_t line) { last_checked_line_ = line; }
+  void checkLine(size_t line) {
+    last_checked_line_ = line;
+  }
 
-  void incFailure() { ++failure_num_; }
+  void incFailure() {
+    ++failure_num_;
+  }
 
-  size_t getFailureNum() { return failure_num_; }
+  size_t getFailureNum() {
+    return failure_num_;
+  }
 };
 
-template <bool should_be_included = true> struct TestCase : BaseCase {
+
+template<bool should_be_included = true>
+struct TestCase : BaseCase
+{
 public:
   TestCase(std::function<void()> method, const std::string &name,
            const std::string &file, size_t line)
@@ -94,9 +119,13 @@ public:
     }
   }
 
-  void abort() override { is_aborted_ = true; }
+  void abort() override {
+    is_aborted_ = true;
+  }
 
-  bool isAborted() override { return is_aborted_; }
+  bool isAborted() override {
+    return is_aborted_;
+  }
 
   ~TestCase() override = default;
 
@@ -108,17 +137,23 @@ private:
   bool is_aborted_;
 };
 
-template <> struct TestCase<false> {
+
+template<>
+struct TestCase<false>
+{
   TestCase(std::function<void()>, const std::string &, const std::string &,
-           size_t) {}
+           size_t) {
+  }
 };
 
+
 #ifdef TEST_MAIN
+
 [[noreturn]] static void report_and_exit() {
   std::cout << "\n**** ";
   std::cout << UnitTest::getInstance().getFailureNum()
             << " failures are detected." << std::endl;
-  exit((int)UnitTest::getInstance().getFailureNum());
+  exit((int) UnitTest::getInstance().getFailureNum());
 }
 
 int main() {
@@ -131,16 +166,18 @@ int main() {
   UnitTest::getInstance().runAll();
   report_and_exit();
 }
+
 #endif
 
-template <typename F, typename... Args,
-          typename = decltype(std::declval<F>()(std::declval<Args>()...))>
+template<typename F, typename... Args,
+    typename = decltype(std::declval<F>()(std::declval<Args>()...))>
 void do_check_failed(F &&f, Args &&...args) {
   f(std::forward<Args>(args)...);
 }
 
-template <typename... Msgs> void do_check_failed(Msgs &&...msgs) {
-  (void)std::initializer_list<int>{
+template<typename... Msgs>
+void do_check_failed(Msgs &&...msgs) {
+  (void) std::initializer_list<int>{
       (std::cout << ">>> " << msgs << std::endl, 0)...};
 }
 

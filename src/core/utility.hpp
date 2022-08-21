@@ -3,35 +3,45 @@
 //
 #ifndef ORM_UTILITY_HPP
 #define ORM_UTILITY_HPP
-#include "../iguana/iguana/reflection.hpp"
+
+#include "iguana/reflection.hpp"
 #include "entity.hpp"
 #include "type_mapping.hpp"
 
 namespace ormpp {
-template <typename... Args> struct value_of;
+template<typename... Args>
+struct value_of;
 
-template <typename T> struct value_of<T> {
+template<typename T>
+struct value_of<T>
+{
   static const auto value = (iguana::get_value<T>());
 };
 
-template <typename T, typename... Rest> struct value_of<T, Rest...> {
+template<typename T, typename... Rest>
+struct value_of<T, Rest...>
+{
   static const auto value = (value_of<T>::value + value_of<Rest...>::value);
 };
 
-template <typename List> struct result_size;
+template<typename List>
+struct result_size;
 
-template <template <class...> class List, class... T>
-struct result_size<List<T...>> {
+template<template<class...> class List, class... T>
+struct result_size<List<T...>>
+{
   constexpr static const size_t value =
       value_of<T...>::value; // (iguana::get_value<T>() + ...);
 };
 
-template <typename T> inline void append_impl(std::string &sql, const T &str) {
+template<typename T>
+inline void append_impl(std::string &sql, const T &str) {
   if constexpr (std::is_same_v<std::string, T> ||
                 std::is_same_v<std::string_view, T>) {
     if (str.empty())
       return;
-  } else {
+  }
+  else {
     if (sizeof(str) == 0) {
       return;
     }
@@ -41,13 +51,13 @@ template <typename T> inline void append_impl(std::string &sql, const T &str) {
   sql += " ";
 }
 
-template <typename... Args>
+template<typename... Args>
 inline void append(std::string &sql, Args &&...args) {
   (append_impl(sql, std::forward<Args>(args)), ...);
   //((sql+=std::forward<Args>(args), sql+=" "),...);
 }
 
-template <typename... Args>
+template<typename... Args>
 inline auto sort_tuple(const std::tuple<Args...> &tp) {
   if constexpr (sizeof...(Args) == 2) {
     auto [a, b] = tp;
@@ -56,14 +66,19 @@ inline auto sort_tuple(const std::tuple<Args...> &tp) {
       return std::make_tuple(b, a);
     else
       return tp;
-  } else {
+  }
+  else {
     return tp;
   }
 }
 
-enum class DBType { mysql, sqlite, postgresql, unknown };
+enum class DBType
+{
+  mysql, sqlite, postgresql, unknown
+};
 
-template <typename T> inline constexpr auto get_type_names(DBType type) {
+template<typename T>
+inline constexpr auto get_type_names(DBType type) {
   constexpr auto SIZE = iguana::get_value<T>();
   std::array<std::string, SIZE> arr = {};
   iguana::for_each(T{}, [&](auto &item, auto i) {
@@ -71,19 +86,19 @@ template <typename T> inline constexpr auto get_type_names(DBType type) {
     using U =
         std::remove_reference_t<decltype(iguana::get<Idx>(std::declval<T>()))>;
     std::string s;
-    if(type==DBType::unknown) {}
-#ifdef ORMPP_ENABLE_MYSQL    
-    else if(type==DBType::mysql) {
-      s = ormpp_mysql::type_to_name(identity<U>{});
-    }
+    if (type == DBType::unknown) {}
+#ifdef ORMPP_ENABLE_MYSQL
+      else if(type==DBType::mysql) {
+        s = ormpp_mysql::type_to_name(identity<U>{});
+      }
 #endif
 #ifdef ORMPP_ENABLE_SQLITE3
-    else if(type==DBType::sqlite) {
-      s = ormpp_sqlite::type_to_name(identity<U>{});
-    }
+      else if(type==DBType::sqlite) {
+        s = ormpp_sqlite::type_to_name(identity<U>{});
+      }
 #endif
 #ifdef ORMPP_ENABLE_PG
-    else if(type==DBType::postgresql) {
+    else if (type == DBType::postgresql) {
       s = ormpp_postgresql::type_to_name(identity<U>{});
     }
 #endif
@@ -94,13 +109,13 @@ template <typename T> inline constexpr auto get_type_names(DBType type) {
   return arr;
 }
 
-template <typename... Args, typename Func, std::size_t... Idx>
+template<typename... Args, typename Func, std::size_t... Idx>
 inline void for_each0(const std::tuple<Args...> &t, Func &&f,
                       std::index_sequence<Idx...>) {
   (f(std::get<Idx>(t)), ...);
 }
 
-template <typename T, typename = std::enable_if_t<iguana::is_reflection_v<T>>>
+template<typename T, typename = std::enable_if_t<iguana::is_reflection_v<T>>>
 inline std::string get_name() {
 #ifdef ORMPP_ENABLE_PG
   std::string quota_name = "'" + std::string(iguana::get_name<T>()) + "'";
@@ -111,7 +126,8 @@ inline std::string get_name() {
   return quota_name;
 }
 
-template <typename T> inline std::string generate_insert_sql(bool replace) {
+template<typename T>
+inline std::string generate_insert_sql(bool replace) {
   std::string sql = replace ? "replace into " : "insert into ";
   constexpr size_t SIZE = iguana::get_value<T>();
   auto name = get_name<T>();
@@ -127,7 +143,7 @@ template <typename T> inline std::string generate_insert_sql(bool replace) {
   return sql;
 }
 
-template <typename T>
+template<typename T>
 inline std::string
 generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_,
                          bool replace) {
@@ -149,7 +165,8 @@ generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_,
     if (i < SIZE - 1) {
       fields += ", ";
       values += ", ";
-    } else {
+    }
+    else {
       fields += ")";
       values += ")";
     }
@@ -159,17 +176,20 @@ generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_,
 }
 
 //    template <typename T>
-inline bool is_empty(const std::string &t) { return t.empty(); }
+inline bool is_empty(const std::string &t) {
+  return t.empty();
+}
 
-template <class T>
+template<class T>
 constexpr bool is_char_array_v = std::is_array_v<T>
-    &&std::is_same_v<char, std::remove_pointer_t<std::decay_t<T>>>;
+                                 && std::is_same_v<char, std::remove_pointer_t<std::decay_t<T>>>;
 
-template <size_t N> inline constexpr size_t char_array_size(char (&)[N]) {
+template<size_t N>
+inline constexpr size_t char_array_size(char (&)[N]) {
   return N;
 }
 
-template <typename T, typename... Args>
+template<typename T, typename... Args>
 inline std::string generate_delete_sql(Args &&...where_conditon) {
   std::string sql = "delete from ";
   auto name = get_name<T>();
@@ -182,7 +202,8 @@ inline std::string generate_delete_sql(Args &&...where_conditon) {
   return sql;
 }
 
-template <typename T> inline bool has_key(const std::string &s) {
+template<typename T>
+inline bool has_key(const std::string &s) {
   auto arr = iguana::get_array<T>();
   for (size_t i = 0; i < arr.size(); ++i) {
     if (s.find(arr[i].data()) != std::string::npos)
@@ -192,14 +213,16 @@ template <typename T> inline bool has_key(const std::string &s) {
   return false;
 }
 
-inline void get_sql_conditions(std::string &) {}
+inline void get_sql_conditions(std::string &) {
+}
 
-template <typename... Args>
+template<typename... Args>
 inline void get_sql_conditions(std::string &sql, const std::string &arg,
                                Args &&...args) {
   if (arg.find("select") != std::string::npos) {
     sql = arg;
-  } else {
+  }
+  else {
     if (arg.find("limit") != std::string::npos) {
       auto pos = sql.find("where");
       sql = sql.substr(0, pos);
@@ -208,7 +231,7 @@ inline void get_sql_conditions(std::string &sql, const std::string &arg,
   }
 }
 
-template <typename T, typename... Args>
+template<typename T, typename... Args>
 inline std::string generate_query_sql(Args &&...args) {
   constexpr size_t param_size = sizeof...(Args);
   static_assert(param_size == 0 || param_size > 0);
@@ -225,10 +248,12 @@ inline std::string generate_query_sql(Args &&...args) {
   return sql;
 }
 
-template <typename T> inline constexpr auto to_str(T &&t) {
+template<typename T>
+inline constexpr auto to_str(T &&t) {
   if constexpr (std::is_arithmetic_v<std::decay_t<T>>) {
     return std::to_string(std::forward<T>(t));
-  } else {
+  }
+  else {
     return std::string("'") + t + std::string("'");
   }
 }
@@ -239,7 +264,7 @@ inline void get_str(std::string &sql, const std::string &s) {
   sql.insert(pos, s);
 }
 
-template <typename... Args>
+template<typename... Args>
 inline std::string get_sql(const std::string &o, Args &&...args) {
   auto sql = o;
   std::string s = "";
@@ -248,14 +273,17 @@ inline std::string get_sql(const std::string &o, Args &&...args) {
   return sql;
 }
 
-template <typename T> struct field_attribute;
+template<typename T>
+struct field_attribute;
 
-template <typename T, typename U> struct field_attribute<U T::*> {
+template<typename T, typename U>
+struct field_attribute<U T::*>
+{
   using type = T;
   using return_type = U;
 };
 
-template <typename U>
+template<typename U>
 constexpr std::string_view get_field_name(std::string_view full_name) {
   using T = typename field_attribute<U>::type;
   return full_name.substr(iguana::get_name<T>().length() + 2,

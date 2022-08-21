@@ -1,4 +1,5 @@
 #ifdef _MSC_VER
+
 #ifdef _WIN64
 #include <WinSock2.h>
 #elif _WIN32
@@ -6,19 +7,22 @@
 #endif
 
 #endif
+
+
+
 #include <iostream>
 #include <thread>
 
 #ifdef ORMPP_ENABLE_MYSQL
-#include "mysql.hpp"
+#include "dbs/mysql.hpp"
 #endif
-
 #ifdef ORMPP_ENABLE_SQLITE3
 #include "sqlite.hpp"
 #endif
-
 #ifdef ORMPP_ENABLE_PG
+
 #include "postgresql.hpp"
+
 #endif
 
 #include "connection_pool.hpp"
@@ -26,7 +30,8 @@
 #include "ormpp_cfg.hpp"
 
 #define TEST_MAIN
-#include "unit_test.hpp"
+
+#include "../examples/unit_test.hpp"
 
 using namespace std::string_literals;
 
@@ -36,14 +41,16 @@ using namespace std::string_literals;
 // };
 // REFLECTION(test_tb, id, name);
 
-struct person {
+struct person
+{
   int id;
   std::string name;
   int age;
 };
 REFLECTION(person, id, name, age)
 
-struct student {
+struct student
+{
   int code; // key
   std::string name;
   char sex;
@@ -53,7 +60,8 @@ struct student {
 };
 REFLECTION(student, code, name, sex, age, dm, classroom)
 
-struct simple {
+struct simple
+{
   int id;
   double code;
   int age;
@@ -97,9 +105,13 @@ const char *ip = "127.0.0.1"; // your database ip
 //    m_begin).count(); std::cout<<s<<'\n';
 //}
 
-template <class T, size_t N> constexpr size_t size(T (&)[N]) { return N; }
+template<class T, size_t N>
+constexpr size_t size(T (&)[N]) {
+  return N;
+}
 
-struct dummy {
+struct dummy
+{
   int id;
   std::string name;
 };
@@ -108,8 +120,8 @@ REFLECTION(dummy, id, name);
 TEST_CASE(mysql_exist_tb) {
   dbng<mysql> mysql;
   TEST_REQUIRE(mysql.connect(ip, "root", "12345", "testdb", /*timeout_seconds=*/5, 3306));
-  dummy d{ 0, "tom" };
-  dummy d1{ 0, "jerry" };
+  dummy d{0, "tom"};
+  dummy d1{0, "jerry"};
   mysql.insert(d);
   mysql.insert(d1);
   auto v = mysql.query<dummy>("limit 1, 1");
@@ -208,6 +220,7 @@ TEST_CASE(postgres_pool) {
     bool r = conn->create_datatable<person>();
   }
 }
+
 #endif
 
 TEST_CASE(orm_connect) {
@@ -744,29 +757,38 @@ TEST_CASE(orm_transaction) {
 #endif
 }
 
-struct log {
-  template <typename... Args> bool before(Args... args) {
+
+struct log
+{
+  template<typename... Args>
+  bool before(Args... args) {
     std::cout << "log before" << std::endl;
     return true;
   }
 
-  template <typename T, typename... Args> bool after(T t, Args... args) {
+  template<typename T, typename... Args>
+  bool after(T t, Args... args) {
     std::cout << "log after" << std::endl;
     return true;
   }
 };
 
-struct validate {
-  template <typename... Args> bool before(Args... args) {
+
+struct validate
+{
+  template<typename... Args>
+  bool before(Args... args) {
     std::cout << "validate before" << std::endl;
     return true;
   }
 
-  template <typename T, typename... Args> bool after(T t, Args... args) {
+  template<typename T, typename... Args>
+  bool after(T t, Args... args) {
     std::cout << "validate after" << std::endl;
     return true;
   }
 };
+
 
 TEST_CASE(orm_aop) {
   // dbng<mysql> mysql;
