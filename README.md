@@ -53,7 +53,7 @@ int main()
 
 	mysql.delete_records<person>();
 
-	//transaction
+	// transaction
 	mysql.begin();
 	for (int i = 0; i < 10; ++i) {
 		person s = {i, "tom", 19};
@@ -75,12 +75,12 @@ int main()
 git clone https://github.com/MutiYouth/ormpp.git --recursive
 ```
 然后，Windows下可使用CMake、VisualStudio 进行后续的编译处理; 或者linux下，使用常规的编译过程编译即可。
-```
+```bash
 cd path_to_clone_root_dir
 mkdir build && cd build
 cmake ..
 make -j6
-sudo make install
+# sudo make install
 ```
 
 ## 使用pg时

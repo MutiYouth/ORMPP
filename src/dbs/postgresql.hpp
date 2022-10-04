@@ -39,8 +39,12 @@ public:
   template<typename... Args>
   bool connect(Args &&...args) {
     auto sql = ""s;
-    sql = generate_conn_sql(std::make_tuple(std::forward<Args>(args)...));
+    auto passed_in_paras = std::make_tuple(std::forward<Args>(args)...);
 
+    // 恢复出db的名称
+    pg_db_conn_name_ = to_str(std::get<3>(passed_in_paras));
+
+    sql = generate_conn_sql(passed_in_paras);
     con_ = PQconnectdb(sql.data());
     if (PQstatus(con_) != CONNECTION_OK) {
       std::cout << PQerrorMessage(con_) << std::endl;
@@ -50,8 +54,8 @@ public:
     return true;
   }
 
-  template<typename... Args>
-  bool disconnect(Args &&...args) {
+  // template<typename... Args>
+  bool disconnect() {     // Args &&...args
     if (con_ != nullptr) {
       PQfinish(con_);
       con_ = nullptr;
@@ -187,7 +191,7 @@ public:
   }
 
   template<typename T, typename... Args>
-  constexpr std::enable_if_t<iguana::is_reflection_v < T>, std::vector<T>> query(Args &&...args) {
+  constexpr std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>> query(Args &&...args) {
     auto sql = generate_query_sql<T>(std::forward<Args>(args)...);
     constexpr auto SIZE = iguana::get_value<T>();
 
@@ -217,7 +221,7 @@ public:
   }
 
   template<typename T, typename Arg, typename... Args>
-  std::enable_if_t<!iguana::is_reflection_v < T>, std::vector<T>>query(const Arg &s, Args &&...args) {
+  std::enable_if_t<!iguana::is_reflection_v<T>, std::vector<T>> query(const Arg &s, Args &&...args) {
     static_assert(iguana::is_tuple<T>::value);
     constexpr auto SIZE = std::tuple_size_v<T>;
 
@@ -248,7 +252,7 @@ public:
       iguana::for_each(
           tp,
           [this, i, &index](auto &item, auto I) {
-            if constexpr (iguana::is_reflection_v < decltype(item) >) {
+            if constexpr (iguana::is_reflection_v<decltype(item)>) {
               std::remove_reference_t<decltype(item)> t = {};
               iguana::for_each(t, [this, &index, &t](auto ele, auto i) {
                 assign(t.*ele, (int) i, index++);
@@ -339,14 +343,17 @@ private:
   template<typename Tuple>
   std::string generate_conn_sql(const Tuple &tp) {
     constexpr size_t SIZE = std::tuple_size_v<Tuple>;
+
     if constexpr (SIZE == 4) {
-      return generate_conn_sql(
-          std::make_tuple("host", "user", "password", "dbname"), tp,
-          std::make_index_sequence<SIZE>{});
+      return generate_conn_sql(std::make_tuple("host", "user", "password", "dbname"),
+                               tp, std::make_index_sequence<SIZE>{});
     }
     else if constexpr (SIZE == 5) {
-      return generate_conn_sql(std::make_tuple("host", "user", "password",
-                                               "dbname", "connect_timeout"),
+      return generate_conn_sql(std::make_tuple("host", "user", "password", "dbname", "port"),
+                               tp, std::make_index_sequence<SIZE>{});
+    }
+    else if constexpr (SIZE == 6) {
+      return generate_conn_sql(std::make_tuple("host", "user", "password", "dbname", "port", "connect_timeout"),
                                tp, std::make_index_sequence<SIZE>{});
     }
     else {
@@ -359,8 +366,8 @@ private:
                                 const std::tuple<Args2...> &tp2,
                                 std::index_sequence<Idx...>) {
     std::string sql = "";
-    (append(sql, std::get<Idx>(tp1), "=", to_str(std::get<Idx>(tp2)), " "),
-        ...);
+    (append(sql, std::get<Idx>(tp1), "=", to_str(std::get<Idx>(tp2)), " "), ...);
+
     return sql;
   }
 
@@ -526,10 +533,10 @@ private:
     std::string auto_key = (it == auto_key_map_.end()) ? "" : it->second;
 
     iguana::for_each(t, [&t, &param_values, &auto_key, this](auto item, auto i) {
-                       /*if(!auto_key.empty()&&auto_key==iguana::get_name<T>(decltype(i)::value).data())
-                           return;*/
-                       set_param_values(param_values, t.*item);
-                     });
+      /*if(!auto_key.empty()&&auto_key==iguana::get_name<T>(decltype(i)::value).data())
+          return;*/
+      set_param_values(param_values, t.*item);
+    });
 
     if (param_values.empty())
       return INT_MIN;
@@ -555,14 +562,14 @@ private:
 
   template<typename T>
   void set_param_values(std::vector<std::vector<char>> &param_values,
-                                  T &&value) {
+                        T &&value) {
     using U = std::remove_const_t<std::remove_reference_t<T>>;
-    if constexpr (std::is_integral_v<U> && !iguana::is_int64_v < U >) {
+    if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) {
       std::vector<char> temp(20, 0);
       itoa_fwd(value, temp.data());
       param_values.push_back(std::move(temp));
     }
-    else if constexpr (iguana::is_int64_v < U >) {
+    else if constexpr (iguana::is_int64_v<U>) {
       std::vector<char> temp(65, 0);
       xtoa(value, temp.data(), 10, std::is_signed_v<U>);
       param_values.push_back(std::move(temp));
@@ -579,7 +586,7 @@ private:
       //                    std::cout<<value.size()<<std::endl;
       param_values.push_back(std::move(temp));
     }
-    else if constexpr (is_char_array_v < U >) {
+    else if constexpr (is_char_array_v<U>) {
       std::vector<char> temp = {};
       std::copy(value, value + sizeof(U), std::back_inserter(temp));
       param_values.push_back(std::move(temp));
@@ -592,10 +599,10 @@ private:
   template<typename T>
   constexpr void assign(T &&value, int row, int i) {
     using U = std::remove_const_t<std::remove_reference_t<T>>;
-    if constexpr (std::is_integral_v<U> && !iguana::is_int64_v < U >) {
+    if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) {
       value = std::atoi(PQgetvalue(res_, row, i));
     }
-    else if constexpr (iguana::is_int64_v < U >) {
+    else if constexpr (iguana::is_int64_v<U>) {
       value = std::atoll(PQgetvalue(res_, row, i));
     }
     else if constexpr (std::is_floating_point_v<U>) {
@@ -604,7 +611,7 @@ private:
     else if constexpr (std::is_same_v<std::string, U>) {
       value = PQgetvalue(res_, row, i);
     }
-    else if constexpr (is_char_array_v < U >) {
+    else if constexpr (is_char_array_v<U>) {
       auto p = PQgetvalue(res_, row, i);
       memcpy(value, p, sizeof(U));
     }
@@ -615,7 +622,7 @@ private:
 
   template<typename T, typename... Args>
   std::string get_condition(const T &t, const std::string &key,
-                                      Args &&...args) {
+                            Args &&...args) {
     std::string result = "";
     constexpr auto SIZE = iguana::get_value<T>();
     iguana::for_each(t, [&](auto &item, auto i) {
@@ -706,7 +713,10 @@ private:
   PGconn *con_ = nullptr;
   std::map<std::string, std::string> auto_key_map_;
   std::map<std::string, std::string> key_map_;
+  static std::string pg_db_conn_name_;
 };
+
+std::string postgresql::pg_db_conn_name_ = "";
 
 } // namespace ormpp
 #endif // ORM_POSTGRESQL_HPP

@@ -54,7 +54,7 @@ inline void append_impl(std::string &sql, const T &str) {
 template<typename... Args>
 inline void append(std::string &sql, Args &&...args) {
   (append_impl(sql, std::forward<Args>(args)), ...);
-  //((sql+=std::forward<Args>(args), sql+=" "),...);
+  // ((sql+=std::forward<Args>(args), sql+=" "),...);
 }
 
 template<typename... Args>
@@ -110,13 +110,12 @@ inline constexpr auto get_type_names(DBType type) {
 }
 
 template<typename... Args, typename Func, std::size_t... Idx>
-inline void for_each0(const std::tuple<Args...> &t, Func &&f,
-                      std::index_sequence<Idx...>) {
+inline void for_each0(const std::tuple<Args...> &t, Func &&f, std::index_sequence<Idx...>) {
   (f(std::get<Idx>(t)), ...);
 }
 
 template<typename T, typename = std::enable_if_t<iguana::is_reflection_v<T>>>
-inline std::string get_name() {
+inline std::string get_name(const std::string db_name = "") {
 #ifdef ORMPP_ENABLE_PG
   std::string quota_name = "'" + std::string(iguana::get_name<T>()) + "'";
 #else
@@ -145,8 +144,7 @@ inline std::string generate_insert_sql(bool replace) {
 
 template<typename T>
 inline std::string
-generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_,
-                         bool replace) {
+generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_, bool replace) {
   std::string sql = replace ? "replace into " : "insert into ";
   constexpr auto SIZE = iguana::get_value<T>();
   auto name = get_name<T>();
@@ -175,7 +173,7 @@ generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_,
   return sql;
 }
 
-//    template <typename T>
+// template <typename T>
 inline bool is_empty(const std::string &t) {
   return t.empty();
 }
@@ -232,6 +230,7 @@ inline void get_sql_conditions(std::string &sql, const std::string &arg,
 }
 
 template<typename T, typename... Args>
+// WENG TODO 22-10-4: 这里的PG数据库，可能会需要带上数库名，放到表格前面。
 inline std::string generate_query_sql(Args &&...args) {
   constexpr size_t param_size = sizeof...(Args);
   static_assert(param_size == 0 || param_size > 0);

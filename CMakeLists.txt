@@ -14,7 +14,6 @@ set(SOURCE_FILES
         src/core/entity.hpp
         src/core/connection_pool.hpp
         src/core/ormpp_cfg.hpp
-        src/examples/unit_test.hpp
         src/dbs/pg_types.h
         )
 if (ENABLE_MYSQL)
@@ -34,7 +33,7 @@ endif ()
 
 
 
-
+# add exe
 include_directories(
     ${CMAKE_SOURCE_DIR}/thirdparty/iguana
 )
@@ -49,3 +48,9 @@ endif ()
 if (ENABLE_PG)
     target_link_libraries(ormpp pq)
 endif ()
+
+# add test
+add_subdirectory(test)
+
+# add examples
+add_subdirectory(src/examples)
