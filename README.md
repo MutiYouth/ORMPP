@@ -90,7 +90,6 @@ apt-get install libpq-dev
 ```
 
 ### 使用 mysql时
-?
 ```
 apt-get install mysql-client
 ```

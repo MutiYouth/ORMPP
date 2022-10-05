@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace ormpp {
+
 template<typename DB>
 class dbng
 {

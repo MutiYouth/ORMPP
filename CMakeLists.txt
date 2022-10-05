@@ -37,16 +37,20 @@ endif ()
 include_directories(
     ${CMAKE_SOURCE_DIR}/thirdparty/iguana
 )
-add_executable(ormpp ${SOURCE_FILES})
+add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
 
 if (ENABLE_MYSQL)
-    target_link_libraries(ormpp mysqlclient)
+    if(MSVC)
+        target_link_libraries(${CMAKE_PROJECT_NAME} libmysql)
+    else()
+        target_link_libraries(${CMAKE_PROJECT_NAME} mysqlclient)
+    endif()
 endif ()
 if (ENABLE_SQLITE3)
-    target_link_libraries(ormpp sqlite3)
+    target_link_libraries(${CMAKE_PROJECT_NAME} sqlite3)
 endif ()
 if (ENABLE_PG)
-    target_link_libraries(ormpp pq)
+    target_link_libraries(${CMAKE_PROJECT_NAME} pq)
 endif ()
 
 # add
