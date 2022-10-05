@@ -47,6 +47,8 @@ struct identity
     Type res{};                                                                \
     return res;                                                                \
   }
+
+
 #ifdef ORMPP_ENABLE_MYSQL
 namespace ormpp_mysql {
 REGISTER_TYPE(char, MYSQL_TYPE_TINY)
@@ -86,11 +88,12 @@ inline constexpr auto type_to_name(identity<int64_t>) noexcept {
 inline auto type_to_name(identity<std::string>) noexcept { return "TEXT"sv; }
 template <size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
-  std::string s = "varchar(" + std::to_string(N) + ")";
-  return s;
+  return "varchar(" + std::to_string(N) + ")";
 }
 } // namespace ormpp_mysql
 #endif
+
+
 #ifdef ORMPP_ENABLE_SQLITE3
 namespace ormpp_sqlite {
 REGISTER_TYPE(int, SQLITE_INTEGER)

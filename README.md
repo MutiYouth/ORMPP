@@ -66,7 +66,7 @@ int main()
 }
 ```
 
-更多使用说明，见[UserManual](User_Manual.md)。
+更多使用说明，见`src/examples`, 或使用手册 [UserManual](User_Manual.md)。
 
 
 ## 如何编译
@@ -118,6 +118,8 @@ windows >vs2017 update5
 5. 支持更多的数据库、数据类型
 6. 增加数据库链接池
 
+# REF
+* [xmh0511/xorm](https://github.com/xmh0511/xorm)
 
 # 联系方式
 ## 当前分支维护

@@ -24,14 +24,13 @@ struct ormpp_cfg
 REFLECTION(ormpp_cfg, db_ip, user_name, pwd, db_name, timeout, db_conn_num, db_port);
 
 
-/*
-        int max_thread_num = config_manager::get<int>("max_thread_num",
-   "ormpp.cfg"); std::string log_path =
-   config_manager::get<std::string>("log_path", "ormpp.cfg");
+/*int max_thread_num = config_manager::get<int>("max_thread_num", "ormpp.cfg");
+std::string log_path = config_manager::get<std::string>("log_path", "ormpp.cfg");
 
-        config_manager::set("max_thread_num", 6, "ormpp.cfg");
-        config_manager::set("log_path", std::string("/tmp/"), "ormpp.cfg");
-        */
+config_manager::set("max_thread_num", 6, "ormpp.cfg");
+config_manager::set("log_path", std::string("/tmp/"), "ormpp.cfg");*/
+
+
 class config_manager
 {
 public:
