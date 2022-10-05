@@ -138,51 +138,51 @@ REGISTER_TYPE(double, FLOAT8OID)
 REGISTER_TYPE(int64_t, INT8OID)
 
 inline int type_to_id(identity<std::string>) noexcept {
-  return TEXTOID;
+    return TEXTOID;
 }
 
 inline std::string
 id_to_type(std::integral_constant<std::size_t, TEXTOID>) noexcept {
-  std::string res{};
-  return res;
+    std::string res{};
+    return res;
 }
 
 inline constexpr auto type_to_name(identity<bool>) noexcept {
-  return "integer"sv;
+    return "integer"sv;
 }
 
 inline constexpr auto type_to_name(identity<char>) noexcept {
-  return "char"sv;
+    return "char"sv;
 }
 
 inline constexpr auto type_to_name(identity<short>) noexcept {
-  return "smallint"sv;
+    return "smallint"sv;
 }
 
 inline constexpr auto type_to_name(identity<int>) noexcept {
-  return "integer"sv;
+    return "integer"sv;
 }
 
 inline constexpr auto type_to_name(identity<float>) noexcept {
-  return "real"sv;
+    return "real"sv;
 }
 
 inline constexpr auto type_to_name(identity<double>) noexcept {
-  return "double precision"sv;
+    return "double precision"sv;
 }
 
 inline constexpr auto type_to_name(identity<int64_t>) noexcept {
-  return "bigint"sv;
+    return "bigint"sv;
 }
 
 inline auto type_to_name(identity<std::string>) noexcept {
-  return "text"sv;
+    return "text"sv;
 }
 
 template<size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
-  std::string s = "varchar(" + std::to_string(N) + ")";
-  return s;
+    std::string s = "varchar(" + std::to_string(N) + ")";
+    return s;
 }
 } // namespace ormpp_postgresql
 #endif

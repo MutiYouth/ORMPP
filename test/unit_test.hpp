@@ -9,10 +9,10 @@
 
 struct BaseCase
 {
-  virtual void run() = 0;
-  virtual void abort() = 0;
-  virtual bool isAborted() = 0;
-  virtual ~BaseCase() = default;
+    virtual void run() = 0;
+    virtual void abort() = 0;
+    virtual bool isAborted() = 0;
+    virtual ~BaseCase() = default;
 };
 
 
@@ -24,59 +24,59 @@ struct AbortThisCase
 class UnitTest
 {
 private:
-  UnitTest() : last_checked_line_{0}, failure_num_{0}, current_case_{nullptr} {
-  }
+    UnitTest() : last_checked_line_{0}, failure_num_{0}, current_case_{nullptr} {
+    }
 
-  std::vector<BaseCase *> test_cases_;
-  std::string last_checked_file_;
-  size_t last_checked_line_;
-  size_t failure_num_;
-  BaseCase *current_case_;
+    std::vector<BaseCase *> test_cases_;
+    std::string last_checked_file_;
+    size_t last_checked_line_;
+    size_t failure_num_;
+    BaseCase *current_case_;
 
 public:
-  static UnitTest &getInstance() {
-    static UnitTest instance;
-    return instance;
-  }
-
-  void runAll() {
-    std::cout << ">>> running " << test_cases_.size() << " tests..."
-              << std::endl;
-    for (BaseCase *test: test_cases_) {
-      current_case_ = test;
-      current_case_->run();
+    static UnitTest &getInstance() {
+        static UnitTest instance;
+        return instance;
     }
-  }
 
-  BaseCase *currentCase() {
-    return current_case_;
-  }
+    void runAll() {
+        std::cout << ">>> running " << test_cases_.size() << " tests..."
+                  << std::endl;
+        for (BaseCase *test: test_cases_) {
+            current_case_ = test;
+            current_case_->run();
+        }
+    }
 
-  void registerTestCase(BaseCase *test) {
-    test_cases_.push_back(test);
-  }
+    BaseCase *currentCase() {
+        return current_case_;
+    }
 
-  void printLastCheckedPoint() {
-    std::cout << ">>> ";
-    std::cout << last_checked_file_ << "(" << last_checked_line_ << ")"
-              << ": last checkpoint" << std::endl;
-  }
+    void registerTestCase(BaseCase *test) {
+        test_cases_.push_back(test);
+    }
 
-  void checkFile(const std::string &file) {
-    last_checked_file_ = file;
-  }
+    void printLastCheckedPoint() {
+        std::cout << ">>> ";
+        std::cout << last_checked_file_ << "(" << last_checked_line_ << ")"
+                  << ": last checkpoint" << std::endl;
+    }
 
-  void checkLine(size_t line) {
-    last_checked_line_ = line;
-  }
+    void checkFile(const std::string &file) {
+        last_checked_file_ = file;
+    }
 
-  void incFailure() {
-    ++failure_num_;
-  }
+    void checkLine(size_t line) {
+        last_checked_line_ = line;
+    }
 
-  size_t getFailureNum() {
-    return failure_num_;
-  }
+    void incFailure() {
+        ++failure_num_;
+    }
+
+    size_t getFailureNum() {
+        return failure_num_;
+    }
 };
 
 
@@ -84,101 +84,101 @@ template<bool should_be_included = true>
 struct TestCase : BaseCase
 {
 public:
-  TestCase(std::function<void()> method, const std::string &name,
-           const std::string &file, size_t line)
-      : method_{method}, case_name_{name}, defined_file_{file},
-        defined_line_{line}, is_aborted_{false} {
-    UnitTest::getInstance().registerTestCase(this);
-  }
-
-  void run() override {
-    try {
-      UnitTest::getInstance().checkFile(defined_file_);
-      UnitTest::getInstance().checkLine(defined_line_);
-      size_t old_failure_num = UnitTest::getInstance().getFailureNum();
-      method_();
-      auto failures = UnitTest::getInstance().getFailureNum() - old_failure_num;
-      if (failures) {
-        std::cout << ">>> ";
-        std::cout << failures << " failures are detected in the test case \""
-                  << case_name_ << "\"" << std::endl;
-      }
-    } catch (AbortThisCase &) {
-      std::cout << ">>> " << case_name_ << " aborted." << std::endl;
-      UnitTest::getInstance().printLastCheckedPoint();
-    } catch (std::exception &e) {
-      UnitTest::getInstance().incFailure();
-      std::cout << ">>> fatal error: in \"" << case_name_
-                << "\": " << typeid(e).name() << ": " << e.what() << std::endl;
-      UnitTest::getInstance().printLastCheckedPoint();
-    } catch (...) {
-      UnitTest::getInstance().incFailure();
-      std::cout << ">>> fatal error: in \"" << case_name_
-                << "\": unknown type exception" << std::endl;
-      UnitTest::getInstance().printLastCheckedPoint();
+    TestCase(std::function<void()> method, const std::string &name,
+             const std::string &file, size_t line)
+            : method_{method}, case_name_{name}, defined_file_{file},
+              defined_line_{line}, is_aborted_{false} {
+        UnitTest::getInstance().registerTestCase(this);
     }
-  }
 
-  void abort() override {
-    is_aborted_ = true;
-  }
+    void run() override {
+        try {
+            UnitTest::getInstance().checkFile(defined_file_);
+            UnitTest::getInstance().checkLine(defined_line_);
+            size_t old_failure_num = UnitTest::getInstance().getFailureNum();
+            method_();
+            auto failures = UnitTest::getInstance().getFailureNum() - old_failure_num;
+            if (failures) {
+                std::cout << ">>> ";
+                std::cout << failures << " failures are detected in the test case \""
+                          << case_name_ << "\"" << std::endl;
+            }
+        } catch (AbortThisCase &) {
+            std::cout << ">>> " << case_name_ << " aborted." << std::endl;
+            UnitTest::getInstance().printLastCheckedPoint();
+        } catch (std::exception &e) {
+            UnitTest::getInstance().incFailure();
+            std::cout << ">>> fatal error: in \"" << case_name_
+                      << "\": " << typeid(e).name() << ": " << e.what() << std::endl;
+            UnitTest::getInstance().printLastCheckedPoint();
+        } catch (...) {
+            UnitTest::getInstance().incFailure();
+            std::cout << ">>> fatal error: in \"" << case_name_
+                      << "\": unknown type exception" << std::endl;
+            UnitTest::getInstance().printLastCheckedPoint();
+        }
+    }
 
-  bool isAborted() override {
-    return is_aborted_;
-  }
+    void abort() override {
+        is_aborted_ = true;
+    }
 
-  ~TestCase() override = default;
+    bool isAborted() override {
+        return is_aborted_;
+    }
+
+    ~TestCase() override = default;
 
 private:
-  std::function<void()> method_;
-  std::string case_name_;
-  std::string defined_file_;
-  size_t defined_line_;
-  bool is_aborted_;
+    std::function<void()> method_;
+    std::string case_name_;
+    std::string defined_file_;
+    size_t defined_line_;
+    bool is_aborted_;
 };
 
 
 template<>
 struct TestCase<false>
 {
-  TestCase(std::function<void()>, const std::string &, const std::string &,
-           size_t) {
-  }
+    TestCase(std::function<void()>, const std::string &, const std::string &,
+             size_t) {
+    }
 };
 
 
 #ifdef TEST_MAIN
 
 [[noreturn]] static void report_and_exit() {
-  std::cout << "\n**** ";
-  std::cout << UnitTest::getInstance().getFailureNum()
-            << " failures are detected." << std::endl;
-  exit((int) UnitTest::getInstance().getFailureNum());
+    std::cout << "\n**** ";
+    std::cout << UnitTest::getInstance().getFailureNum()
+              << " failures are detected." << std::endl;
+    exit((int) UnitTest::getInstance().getFailureNum());
 }
 
 int main() {
-  signal(SIGSEGV, [](int) {
-    UnitTest::getInstance().incFailure();
-    std::cout << ">>> fatal error: received SIGSEGV." << std::endl;
-    UnitTest::getInstance().printLastCheckedPoint();
+    signal(SIGSEGV, [](int) {
+        UnitTest::getInstance().incFailure();
+        std::cout << ">>> fatal error: received SIGSEGV." << std::endl;
+        UnitTest::getInstance().printLastCheckedPoint();
+        report_and_exit();
+    });
+    UnitTest::getInstance().runAll();
     report_and_exit();
-  });
-  UnitTest::getInstance().runAll();
-  report_and_exit();
 }
 
 #endif
 
 template<typename F, typename... Args,
-    typename = decltype(std::declval<F>()(std::declval<Args>()...))>
+        typename = decltype(std::declval<F>()(std::declval<Args>()...))>
 void do_check_failed(F &&f, Args &&...args) {
-  f(std::forward<Args>(args)...);
+    f(std::forward<Args>(args)...);
 }
 
 template<typename... Msgs>
 void do_check_failed(Msgs &&...msgs) {
-  (void) std::initializer_list<int>{
-      (std::cout << ">>> " << msgs << std::endl, 0)...};
+    (void) std::initializer_list<int>{
+            (std::cout << ">>> " << msgs << std::endl, 0)...};
 }
 
 #define TEST_CASE(test_name, ...)                                              \

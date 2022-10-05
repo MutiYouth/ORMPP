@@ -43,30 +43,33 @@ using namespace std::string_literals;
 
 struct person
 {
-  int id;
-  std::string name;
-  int age;
+    int id;
+    std::string name;
+    int age;
 };
-REFLECTION(person, id, name, age)
+REFLECTION(person, id, name, age
+)
 
 struct student
 {
-  int code; // key
-  std::string name;
-  char sex;
-  int age;
-  double dm;
-  std::string classroom;
+    int code; // key
+    std::string name;
+    char sex;
+    int age;
+    double dm;
+    std::string classroom;
 };
-REFLECTION(student, code, name, sex, age, dm, classroom)
+REFLECTION(student, code, name, sex, age, dm, classroom
+)
 
 struct simple
 {
-  int id;
-  double code;
-  int age;
+    int id;
+    double code;
+    int age;
 };
-REFLECTION(simple, id, code, age);
+REFLECTION(simple, id, code, age
+);
 
 using namespace ormpp;
 const char *ip = "127.0.0.1"; // your database ip
@@ -107,15 +110,16 @@ const char *ip = "127.0.0.1"; // your database ip
 
 template<class T, size_t N>
 constexpr size_t size(T (&)[N]) {
-  return N;
+    return N;
 }
 
 struct dummy
 {
-  int id;
-  std::string name;
+    int id;
+    std::string name;
 };
-REFLECTION(dummy, id, name);
+REFLECTION(dummy, id, name
+);
 
 #ifdef ORMPP_ENABLE_MYSQL
 TEST_CASE(mysql_exist_tb) {
@@ -164,7 +168,7 @@ TEST_CASE(test_ormpp_cfg) {
     ormpp_cfg cfg{};
     bool ret = config_manager::from_file(cfg, "./cfg/ormpp.cfg");
     if (!ret) {
-      return;
+        return;
     }
 
 #ifdef ORMPP_ENABLE_MYSQL
@@ -186,13 +190,13 @@ TEST_CASE(test_ormpp_cfg) {
 
 #ifdef ORMPP_ENABLE_PG
 TEST_CASE(postgres_pool) {
-    auto & pool = connection_pool<dbng<postgresql>>::instance();
+    auto &pool = connection_pool < dbng < postgresql >> ::instance();
     try {
-      pool.init(3, ip, "root", "12345", "testdb", 2);
-      pool.init(7, ip, "root", "12345", "testdb", 2);
+        pool.init(3, ip, "root", "12345", "testdb", 2);
+        pool.init(7, ip, "root", "12345", "testdb", 2);
     } catch (const std::exception &e) {
-      std::cout << e.what() << std::endl;
-      return;
+        std::cout << e.what() << std::endl;
+        return;
     }
 
     auto conn1 = pool.get();
@@ -200,8 +204,8 @@ TEST_CASE(postgres_pool) {
     auto conn3 = pool.get();
 
     std::thread thd([conn2, &pool] {
-      std::this_thread::sleep_for(std::chrono::seconds(15));
-      pool.return_back(conn2);
+        std::this_thread::sleep_for(std::chrono::seconds(15));
+        pool.return_back(conn2);
     });
 
     auto conn4 = pool.get(); // 10s later, timeout
@@ -212,23 +216,24 @@ TEST_CASE(postgres_pool) {
     thd.join();
 
     for (int i = 0; i < 10; ++i) {
-      auto conn = pool.get();
-      // conn_guard guard(conn);
-      if (conn == nullptr) {
-        std::cout << "no available conneciton" << std::endl;
-        continue;
-      }
+        auto conn = pool.get();
+        // conn_guard guard(conn);
+        if (conn == nullptr) {
+            std::cout << "no available conneciton" << std::endl;
+            continue;
+        }
 
-      bool r = conn->create_datatable<person>();
+        bool r = conn->create_datatable<person>();
     }
 }
+
 #endif
 
 TEST_CASE(orm_connect) {
     int timeout = 5;
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.disconnect());
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb", timeout));
@@ -249,12 +254,12 @@ TEST_CASE(orm_connect) {
 }
 
 TEST_CASE(orm_create_table) {
-    ormpp_key key{ "id" };
-    ormpp_not_null not_null{{ "id", "age" }};
-    ormpp_auto_key auto_key{ "id" };
+    ormpp_key key{"id"};
+    ormpp_not_null not_null{{"id", "age"}};
+    ormpp_auto_key auto_key{"id"};
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<person>());
     TEST_REQUIRE(postgres.create_datatable<person>(key));
@@ -294,14 +299,14 @@ TEST_CASE(orm_create_table) {
 }
 
 TEST_CASE(orm_insert_query) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 0, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 0, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 0, "mke", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s1, s2 };
+    student s = {0, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {0, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {0, "mke", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s1, s2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -315,7 +320,7 @@ TEST_CASE(orm_insert_query) {
 
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     auto vv1 = postgres.query(FID(simple::id), "<", "5");
 #endif
@@ -329,86 +334,86 @@ TEST_CASE(orm_insert_query) {
     // auto key
     {
 #ifdef ORMPP_ENABLE_PG
-      TEST_REQUIRE(postgres.create_datatable<student>(auto_key, not_null));
-      TEST_CHECK(postgres.insert(s) == 1);
-      auto result2 = postgres.query<student>();
-      TEST_CHECK(result2.size() == 1);
-      TEST_CHECK(postgres.insert(v) == 2);
+        TEST_REQUIRE(postgres.create_datatable<student>(auto_key, not_null));
+        TEST_CHECK(postgres.insert(s) == 1);
+        auto result2 = postgres.query<student>();
+        TEST_CHECK(result2.size() == 1);
+        TEST_CHECK(postgres.insert(v) == 2);
 #endif
 
 #ifdef ORMPP_ENABLE_SQLITE3
-      TEST_REQUIRE(sqlite.create_datatable<student>(auto_key));
-      TEST_CHECK(sqlite.insert(s) == 1);
-      auto result3 = sqlite.query<student>();
-      TEST_CHECK(result3.size() == 1);
-      TEST_CHECK(sqlite.insert(v) == 2);
-      auto result6 = sqlite.query<student>();
-      TEST_CHECK(result6.size() == 4);
-      auto v2 = sqlite.query(FID(student::code), "<", "5");
-      auto v3 = sqlite.query<student>("limit 2");
+        TEST_REQUIRE(sqlite.create_datatable<student>(auto_key));
+        TEST_CHECK(sqlite.insert(s) == 1);
+        auto result3 = sqlite.query<student>();
+        TEST_CHECK(result3.size() == 1);
+        TEST_CHECK(sqlite.insert(v) == 2);
+        auto result6 = sqlite.query<student>();
+        TEST_CHECK(result6.size() == 4);
+        auto v2 = sqlite.query(FID(student::code), "<", "5");
+        auto v3 = sqlite.query<student>("limit 2");
 #endif
     }
 
     // key
     {
 #ifdef ORMPP_ENABLE_MYSQL
-      TEST_REQUIRE(mysql.create_datatable<student>(auto_key, not_null));
-      TEST_CHECK(mysql.insert(s) == 1);
-      auto result1 = mysql.query<student>("limit 3");
-      TEST_CHECK(result1.size() == 1);
-      TEST_CHECK(mysql.insert(s) == 1);
-      TEST_CHECK(mysql.insert(v) == 2);
-      auto result4 = mysql.query<student>();
-      TEST_CHECK(result4.size() == 4);
-      auto result5 = mysql.query<student>();
-      TEST_CHECK(result5.size() == 4);
+        TEST_REQUIRE(mysql.create_datatable<student>(auto_key, not_null));
+        TEST_CHECK(mysql.insert(s) == 1);
+        auto result1 = mysql.query<student>("limit 3");
+        TEST_CHECK(result1.size() == 1);
+        TEST_CHECK(mysql.insert(s) == 1);
+        TEST_CHECK(mysql.insert(v) == 2);
+        auto result4 = mysql.query<student>();
+        TEST_CHECK(result4.size() == 4);
+        auto result5 = mysql.query<student>();
+        TEST_CHECK(result5.size() == 4);
 
-      TEST_REQUIRE(mysql.create_datatable<student>(key, not_null));
-      v[0].code = 1;
-      v[1].code = 2;
-      TEST_CHECK(mysql.insert(s) == 1);
-      auto result11 = mysql.query<student>();
-      TEST_CHECK(result11.size() == 1);
-      TEST_CHECK(mysql.insert(s) < 0);
-      TEST_CHECK(mysql.delete_records<student>());
-      TEST_CHECK(mysql.insert(v) == 2);
-      auto result44 = mysql.query<student>();
-      TEST_CHECK(result44.size() == 2);
-      auto result55 = mysql.query<student>();
-      TEST_CHECK(result55.size() == 2);
-      auto result6 = mysql.query<student>();
-      TEST_CHECK(result6.size() == 2);
+        TEST_REQUIRE(mysql.create_datatable<student>(key, not_null));
+        v[0].code = 1;
+        v[1].code = 2;
+        TEST_CHECK(mysql.insert(s) == 1);
+        auto result11 = mysql.query<student>();
+        TEST_CHECK(result11.size() == 1);
+        TEST_CHECK(mysql.insert(s) < 0);
+        TEST_CHECK(mysql.delete_records<student>());
+        TEST_CHECK(mysql.insert(v) == 2);
+        auto result44 = mysql.query<student>();
+        TEST_CHECK(result44.size() == 2);
+        auto result55 = mysql.query<student>();
+        TEST_CHECK(result55.size() == 2);
+        auto result6 = mysql.query<student>();
+        TEST_CHECK(result6.size() == 2);
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-      TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
-      TEST_CHECK(postgres.insert(s) == 1);
-      auto result2 = postgres.query<student>();
-      TEST_CHECK(result2.size() == 1);
-      TEST_CHECK(postgres.delete_records<student>());
-      TEST_CHECK(postgres.insert(v) == 2);
+        TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
+        TEST_CHECK(postgres.insert(s) == 1);
+        auto result2 = postgres.query<student>();
+        TEST_CHECK(result2.size() == 1);
+        TEST_CHECK(postgres.delete_records<student>());
+        TEST_CHECK(postgres.insert(v) == 2);
 #endif
 
 #ifdef ORMPP_ENABLE_SQLITE3
-      TEST_REQUIRE(sqlite.create_datatable<student>(key));
-      TEST_CHECK(sqlite.insert(s) == 1);
-      auto result3 = sqlite.query<student>();
-      TEST_CHECK(result3.size() == 1);
-      TEST_CHECK(sqlite.delete_records<student>());
-      TEST_CHECK(sqlite.insert(v) == 2);
+        TEST_REQUIRE(sqlite.create_datatable<student>(key));
+        TEST_CHECK(sqlite.insert(s) == 1);
+        auto result3 = sqlite.query<student>();
+        TEST_CHECK(result3.size() == 1);
+        TEST_CHECK(sqlite.delete_records<student>());
+        TEST_CHECK(sqlite.insert(v) == 2);
 #endif
     }
 }
 
 TEST_CASE(orm_update) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 1, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 2, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 3, "mke", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s, s1, s2 };
+    student s = {1, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {2, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {3, "mke", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s, s1, s2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -426,7 +431,7 @@ TEST_CASE(orm_update) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
     TEST_CHECK(postgres.insert(v) == 3);
@@ -449,14 +454,14 @@ TEST_CASE(orm_update) {
 }
 
 TEST_CASE(orm_multi_update) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 1, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 2, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 3, "mike", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s, s1, s2 };
+    student s = {1, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {2, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {3, "mike", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s, s1, s2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -483,7 +488,7 @@ TEST_CASE(orm_multi_update) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
     TEST_CHECK(postgres.insert(v) == 3);
@@ -494,14 +499,14 @@ TEST_CASE(orm_multi_update) {
 }
 
 TEST_CASE(orm_delete) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 1, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 2, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 3, "mike", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s, s1, s2 };
+    student s = {1, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {2, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {3, "mike", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s, s1, s2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -516,7 +521,7 @@ TEST_CASE(orm_delete) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
     TEST_CHECK(postgres.insert(v) == 3);
@@ -541,11 +546,11 @@ TEST_CASE(orm_delete) {
 }
 
 TEST_CASE(orm_query) {
-    ormpp_key key{ "id" };
-    simple s1 = { 1, 2.5, 3 };
-    simple s2 = { 2, 3.5, 4 };
-    simple s3 = { 3, 4.5, 5 };
-    std::vector<simple> v{ s1, s2, s3 };
+    ormpp_key key{"id"};
+    simple s1 = {1, 2.5, 3};
+    simple s2 = {2, 3.5, 4};
+    simple s3 = {3, 4.5, 5};
+    std::vector<simple> v{s1, s2, s3};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -570,7 +575,7 @@ TEST_CASE(orm_query) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<simple>(key));
     TEST_CHECK(postgres.insert(v) == 3);
@@ -582,14 +587,14 @@ TEST_CASE(orm_query) {
 }
 
 TEST_CASE(orm_query_some) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 1, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 2, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 3, "mike", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s, s1, s2 };
+    student s = {1, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {2, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {3, "mike", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s, s1, s2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -613,12 +618,12 @@ TEST_CASE(orm_query_some) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
     TEST_CHECK(postgres.insert(v) == 3);
     auto result1 = postgres.query<std::tuple<int, std::string, double>>(
-    "select code, name, dm from student");
+            "select code, name, dm from student");
     TEST_CHECK(result1.size() == 3);
 #endif
 
@@ -634,20 +639,20 @@ TEST_CASE(orm_query_some) {
 }
 
 TEST_CASE(orm_query_multi_table) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 1, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 2, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 3, "mike", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s, s1, s2 };
+    student s = {1, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {2, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {3, "mike", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s, s1, s2};
 
-    ormpp_key key1{ "id" };
-    person p = { 1, "test1", 2 };
-    person p1 = { 2, "test2", 3 };
-    person p2 = { 3, "test3", 4 };
-    std::vector<person> v1{ p, p1, p2 };
+    ormpp_key key1{"id"};
+    person p = {1, "test1", 2};
+    person p1 = {2, "test2", 3};
+    person p2 = {3, "test3", 4};
+    std::vector<person> v1{p, p1, p2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -665,7 +670,7 @@ TEST_CASE(orm_query_multi_table) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
     TEST_CHECK(postgres.insert(v) == 3);
@@ -673,10 +678,10 @@ TEST_CASE(orm_query_multi_table) {
     TEST_CHECK(postgres.insert(v1) == 3);
     TEST_CHECK(postgres.insert(v1) == 3);
     auto result1 = postgres.query<std::tuple<int, std::string, double>>(
-    "select person.*, student.name, student.age from person, student"s);
+            "select person.*, student.name, student.age from person, student"s);
     TEST_CHECK(result1.size() == 9);
     auto result4 = postgres.query<std::tuple<person, student>>(
-    "select * from person, student"s);
+            "select * from person, student"s);
     TEST_CHECK(result1.size() == 9);
 #endif
 
@@ -696,14 +701,14 @@ TEST_CASE(orm_query_multi_table) {
 }
 
 TEST_CASE(orm_transaction) {
-    ormpp_key key{ "code" };
-    ormpp_not_null not_null{{ "code", "age" }};
-    ormpp_auto_key auto_key{ "code" };
+    ormpp_key key{"code"};
+    ormpp_not_null not_null{{"code", "age"}};
+    ormpp_auto_key auto_key{"code"};
 
-    student s = { 1, "tom", 0, 19, 1.5, "room2" };
-    student s1 = { 2, "jack", 1, 20, 2.5, "room3" };
-    student s2 = { 3, "mike", 2, 21, 3.5, "room4" };
-    std::vector<student> v{ s, s1, s2 };
+    student s = {1, "tom", 0, 19, 1.5, "room2"};
+    student s1 = {2, "jack", 1, 20, 2.5, "room3"};
+    student s2 = {3, "mike", 2, 21, 3.5, "room4"};
+    std::vector<student> v{s, s1, s2};
 
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
@@ -724,16 +729,16 @@ TEST_CASE(orm_transaction) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-    dbng<postgresql> postgres;
+    dbng <postgresql> postgres;
     TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
     TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
     TEST_REQUIRE(postgres.begin());
     for (int i = 0; i < 10; ++i) {
-      student s = {i, "tom", 0, 19, 1.5, "room2"};
-      if (!postgres.insert(s)) {
-        postgres.rollback();
-        return;
-      }
+        student s = {i, "tom", 0, 19, 1.5, "room2"};
+        if (!postgres.insert(s)) {
+            postgres.rollback();
+            return;
+        }
     }
     TEST_REQUIRE(postgres.commit());
     auto result1 = postgres.query<student>();
@@ -761,33 +766,33 @@ TEST_CASE(orm_transaction) {
 
 struct log
 {
-  template<typename... Args>
-  bool before(Args... args) {
-    std::cout << "log before" << std::endl;
-    return true;
-  }
+    template<typename... Args>
+    bool before(Args... args) {
+        std::cout << "log before" << std::endl;
+        return true;
+    }
 
-  template<typename T, typename... Args>
-  bool after(T t, Args... args) {
-    std::cout << "log after" << std::endl;
-    return true;
-  }
+    template<typename T, typename... Args>
+    bool after(T t, Args... args) {
+        std::cout << "log after" << std::endl;
+        return true;
+    }
 };
 
 
 struct validate
 {
-  template<typename... Args>
-  bool before(Args... args) {
-    std::cout << "validate before" << std::endl;
-    return true;
-  }
+    template<typename... Args>
+    bool before(Args... args) {
+        std::cout << "validate before" << std::endl;
+        return true;
+    }
 
-  template<typename T, typename... Args>
-  bool after(T t, Args... args) {
-    std::cout << "validate after" << std::endl;
-    return true;
-  }
+    template<typename T, typename... Args>
+    bool after(T t, Args... args) {
+        std::cout << "validate after" << std::endl;
+        return true;
+    }
 };
 
 
