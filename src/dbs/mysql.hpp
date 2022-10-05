@@ -166,7 +166,7 @@ public:
         static_assert(iguana::is_tuple<T>::value);
         constexpr auto SIZE = std::tuple_size_v<T>;
 
-        auto sql = s;
+        std::string sql = s;
         constexpr auto Args_Size = sizeof...(Args);
         if (Args_Size != 0) {
             if (Args_Size != std::count(sql.begin(), sql.end(), '?')) {
@@ -270,9 +270,7 @@ public:
 
         while (mysql_stmt_fetch(stmt_) == 0) {
             auto it = mp.begin();
-            iguana::for_each(
-                    tp,
-                    [&mp, &it](auto &item, auto i) {
+            iguana::for_each( tp, [/*&mp,*/ &it](auto &item, auto i) {
                         using U = std::remove_reference_t<decltype(item)>;
                         if constexpr (std::is_same_v<std::string, U>) {
                             item = std::string(&(*it)[0], strlen((*it).data()));
@@ -283,8 +281,7 @@ public:
                         }
                         else if constexpr (iguana::is_reflection_v<U>) {
                             iguana::for_each(item, [&it, &item](auto ele, auto i) {
-                                using V =
-                                        std::remove_reference_t<decltype(std::declval<U>().*ele)>;
+                                using V = std::remove_reference_t<decltype(std::declval<U>().*ele)>;
                                 if constexpr (std::is_same_v<std::string, V>) {
                                     item.*ele = std::string(&(*it)[0], strlen((*it).data()));
                                     it++;
@@ -648,13 +645,12 @@ private:
     auto get_tp(int &timeout, Args &&...args) {
         auto tp = std::make_tuple(con_, std::forward<Args>(args)...);
         if constexpr (sizeof...(Args) == 5) {
-            auto [c, s1, s2, s3, s4, i] = tp;
-            timeout = i;
+            auto [c, s1, s2, s3, s4, port] = tp;
             return std::make_tuple(c, s1, s2, s3, s4, 0, nullptr, 0);
         }
         else if constexpr (sizeof...(Args) == 6) {
-            auto [c, s1, s2, s3, s4, i, port] = tp;
-            timeout = i;
+            auto [c, s1, s2, s3, s4, port, t_out] = tp;
+            timeout = t_out;
             return std::make_tuple(c, s1, s2, s3, s4, port, nullptr, 0);
         }
         else {

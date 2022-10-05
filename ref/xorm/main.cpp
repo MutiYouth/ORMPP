@@ -186,12 +186,18 @@ int main() {
         std::cout << msg << "\n";
     });
 
+    dao_t<mysql> dao{"xorm"};
+
+    // create table
+
+
 
     // test basic use
     // demo_multi_thread_use();
 
 
-    dao_t<mysql> dao{"xorm"};
+
+
     test tb_info;
     tb_info.id = 0;
     tb_info.a = 0;

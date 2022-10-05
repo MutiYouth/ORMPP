@@ -30,7 +30,7 @@
 * conn_number 连接池数量  
 
 
-##### 非必填参数    
+##### 非必填参数
 * character_encoding 数据库编码方式 
 * port  数据库端口号
 * reconnect_number 尝试重连次数
@@ -60,7 +60,7 @@ int main(){
 ##### db_result<void> insert(T&& t)
 * 参数： 通过REFLECTION注册过的表结构对象  
 * 返回数据： success: SQL语句无错误返回true ， affect_rows: 影响行数， unique_id: 唯一ID， error: 是否有错误（error.message取出错误详情）
- 
+* 表结构要事先在database中建好。
 ````
 #include <iostream>
 #include "mysql.hpp"
@@ -130,6 +130,7 @@ int main(){
 }
 ````
 
+
 #   修改数据  
 >支持两种方式   
 ###### db_result<void> update(T&& v)   
@@ -169,6 +170,7 @@ int main(){
 }
 ````
 
+
 #   查询数据
 ###### db_result<T> query(std::string const& condition, ...)
 * 模板参数: 数据表结构类型  	
@@ -177,7 +179,7 @@ int main(){
 * 后续参数: 条件中的值  
 >如 mysql::Integer{1}
 * 返回数据： success: SQL语句无错误返回true ， results: 返回数据结果vector ， error: 是否有错误（error.message取出错误详情）
- 
+
 ###### 使用方式二   
 * 模板参数: 自定义std::tuple\<T...\> 如 std::tuple\<mysql::Integer,std::string\> 代表查询的数据集的field类型
 * 参数： 完整的查询语句
@@ -207,6 +209,7 @@ int main(){
    auto r0 = dao.query<std::tuple<mysql::Integer,std::string>>("select a,b from test where id=?",mysql::Integer{1});
 }
 ````
+
 # execute方法  
 >支持原生数据库的命令执行  
 ##### db_result<void> execute(std::string const& sql)
@@ -231,6 +234,8 @@ int main(){
   auto r1 = dao.execute("select * from test",get_reuslt);
 }
 ````
+
+
 # 开启事务  
 >提供了两种开启事务的方式
 * 自动事务开启  
@@ -260,6 +265,7 @@ int main(){
     dao.commit();
 }
 ````
+
 # 日志监听
 #### 可以通过设置回调方法获取数据库操作日志  
 >如语句执行错误等  

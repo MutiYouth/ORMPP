@@ -90,8 +90,9 @@ public:
     /**
     * 输入条件，进行查询
     * @tparam T
-    * @tparam Args restriction, all the args are string, the first is the where condition, rest are append conditions
-    * @param args
+    * @tparam Args
+    * @param args restriction, all the args are string, the first is the where condition, rest are append conditions;
+    *  或者，对mysql的查询时，第一项为完整的查询语句，后面的是查询语句中？表示的参数。
     * @return
     */
     template<typename T, typename... Args>

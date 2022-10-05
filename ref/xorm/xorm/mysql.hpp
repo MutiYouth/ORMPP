@@ -204,23 +204,22 @@ private:
 class mysql final
 {
     template<typename T0>
-    friend
-    struct auto_params_lambda0;
+    friend struct auto_params_lambda0;
+
     template<typename T0>
-    friend
-    struct auto_params_lambda1;
+    friend struct auto_params_lambda1;
+
     template<typename T0>
-    friend
-    struct auto_params_lambda2;
+    friend struct auto_params_lambda2;
+
     template<typename Object, typename T0>
-    friend
-    struct auto_params_lambda3;
+    friend struct auto_params_lambda3;
+
     template<typename T0>
-    friend
-    struct auto_params_lambda4;
+    friend struct auto_params_lambda4;
+
     template<typename T0>
-    friend
-    struct auto_params_lambda5;
+    friend struct auto_params_lambda5;
 public:
     using Integer = FundamentionType<int, MYSQL_TYPE_LONG>;
     using Float = FundamentionType<float, MYSQL_TYPE_FLOAT>;
@@ -234,8 +233,7 @@ public:
     using Blob = std::vector<char>;
 private:
     template<typename T>
-    typename std::enable_if<
-            is_fundamention_type<typename std::remove_reference<T>::type>::value || is_date_type<typename std::remove_reference<T>::type>::value, bool>::type
+    typename std::enable_if<is_fundamention_type<typename std::remove_reference<T>::type>::value || is_date_type<typename std::remove_reference<T>::type>::value, bool>::type
     bind_value(T &t, MYSQL_BIND &bind, bool get = false) {
         using type = typename std::remove_reference<T>::type;
         bind.buffer_type = type::field_type;

@@ -27,16 +27,14 @@ public:
     // call_once
     template<typename... Args>
     void init(int maxsize, Args &&...args) {
-        std::call_once(flag_, &connection_pool<DB>::template init_impl<Args...>,
-                       this, maxsize, std::forward<Args>(args)...);
+        std::call_once(flag_, &connection_pool<DB>::template init_impl<Args...>, this, maxsize, std::forward<Args>(args)...);
     }
 
     std::shared_ptr<DB> get() {
         std::unique_lock<std::mutex> lock(mutex_);
 
         while (pool_.empty()) {
-            if (condition_.wait_for(lock, std::chrono::seconds(3)) ==
-                std::cv_status::timeout) {
+            if (condition_.wait_for(lock, std::chrono::seconds(3)) == std::cv_status::timeout) {
                 // timeout
                 return nullptr;
             }
@@ -50,12 +48,11 @@ public:
             return create_connection();
         }
 
-        // check timeout, idle time shuold less than 8 hours
+        // check timeout, idle time should less than 8 hours
         auto now = std::chrono::system_clock::now();
         auto last = conn->get_latest_operate_time();
-        auto mins =
-                std::chrono::duration_cast<std::chrono::minutes>(now - last).count();
-        if ((mins - 6 * 60) > 0) {
+        auto t_mins = std::chrono::duration_cast<std::chrono::minutes>(now - last).count();
+        if ((t_mins - 6 * 60) > 0) {
             return create_connection();
         }
 
@@ -92,7 +89,7 @@ private:
 
     auto create_connection() {
         auto conn = std::make_shared<DB>();
-        auto fn = [conn](auto... targs) { return conn->connect(targs...); };
+        auto fn = [conn](auto... args) { return conn->connect(args...); };
 
         return std::apply(fn, args_) ? conn : nullptr;
     }
