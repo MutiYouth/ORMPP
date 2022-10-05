@@ -58,3 +58,6 @@ add_subdirectory(test)
 
 # add examples
 add_subdirectory(src/examples)
+
+# ref
+add_subdirectory(ref/xorm)
