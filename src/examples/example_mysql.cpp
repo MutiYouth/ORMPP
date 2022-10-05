@@ -3,7 +3,7 @@
 //
 #include <string>
 #include "../core/dbng.hpp"
-#include "../dbs/postgresql.hpp"
+#include "../dbs/mysql.hpp"
 
 using namespace ormpp;
 
@@ -23,38 +23,36 @@ int main() {
     std::vector<person> v{p1, p2};
 
 
-    dbng<postgresql> pg_db;
+    dbng<mysql> mysql_db;
     // ormpp_key key{"id"};
-    pg_db.connect("192.168.10.106", "pi", "weng2022", "test");
-    pg_db.create_datatable<person>();
+    mysql_db.connect("192.168.10.106", "root", "weng2022", "test");
+    mysql_db.drop_table<person>();
+    mysql_db.create_datatable<person>();
 
-    pg_db.insert(p);
-    pg_db.insert(v);
+    mysql_db.insert(p);
+    mysql_db.insert(v);
 
     p.name = "test_111";
     p1.name = "test_2222";
     p2.name = "test_3333";
-    // WENG notice 22-10-5 12:31:  如果对象设置了key，则更新时不需要再进行加入条件列名了。
-    //  否则一定要加入足以证明这个对象的条件列名们。
-    pg_db.update(p, "id");
-    pg_db.update(v, "id");
+    mysql_db.update(p);
+    mysql_db.update(v);
 
-    // WENG TODO 22-10-5: 查询失败
-    auto result = pg_db.query<person>();
+    auto result = mysql_db.query<person>();
     for (auto &person: result) {
         std::cout << person.id << " " << person.name << " " << person.age << std::endl;
     }
 
-    pg_db.delete_records<person>();
+    mysql_db.delete_records<person>();
 
     // transaction
-    pg_db.begin();
+    mysql_db.begin();
     for (int i = 0; i < 10; ++i) {
         person s = {i, "tom", 19};
-        if (!pg_db.insert(s)) {
-            pg_db.rollback();
+        if (!mysql_db.insert(s)) {
+            mysql_db.rollback();
             return -1;
         }
     }
-    pg_db.commit();
+    mysql_db.commit();
 }

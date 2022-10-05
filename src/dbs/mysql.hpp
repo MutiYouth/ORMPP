@@ -82,7 +82,7 @@ public:
 
     template<typename T, typename... Args>
     constexpr bool create_datatable(Args &&...args) {
-        std::string sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
+        auto sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
         sql += " DEFAULT CHARSET=utf8";
         if (mysql_query(con_, sql.data())) {
             fprintf(stderr, "%s\n", mysql_error(con_));
@@ -94,7 +94,7 @@ public:
 
     template<typename T>
     bool drop_table() {
-        auto drop_tb = "DROP TABLE IF EXISTS " + iguana::get_name<T>() + " cascade; ";
+        auto drop_tb = "DROP TABLE IF EXISTS " + std::string(iguana::get_name<T>()) + " cascade; ";
         if (mysql_query(con_, drop_tb.data())) {
             fprintf(stderr, "%s\n", mysql_error(con_));
             return false;
@@ -103,19 +103,14 @@ public:
         return true;
     }
 
+
+
     template<typename T, typename... Args>
     constexpr int insert(const std::vector<T> &t, Args &&...args) {
         auto name = get_name<T>();
-        std::string sql = auto_key_map_[name].empty()
+        auto sql = auto_key_map_[name].empty()
                           ? generate_insert_sql<T>(false)
                           : generate_auto_insert_sql<T>(auto_key_map_, false);
-
-        return insert_impl(sql, t, std::forward<Args>(args)...);
-    }
-
-    template<typename T, typename... Args>
-    constexpr int update(const std::vector<T> &t, Args &&...args) {
-        std::string sql = generate_insert_sql<T>(true);
 
         return insert_impl(sql, t, std::forward<Args>(args)...);
     }
@@ -124,18 +119,28 @@ public:
     constexpr int insert(const T &t, Args &&...args) {
         // insert into person values(?, ?, ?);
         auto name = get_name<T>();
-        std::string sql = auto_key_map_[name].empty()
-                          ? generate_insert_sql<T>(false)
-                          : generate_auto_insert_sql<T>(auto_key_map_, false);
+        auto sql = auto_key_map_[name].empty() ? generate_insert_sql<T>(false) : generate_auto_insert_sql<T>(auto_key_map_, false);
+
+        return insert_impl(sql, t, std::forward<Args>(args)...);
+    }
+
+
+
+    // WENG bug found 22-10-5 15:18: 更新异常！
+    template<typename T, typename... Args>
+    constexpr int update(const std::vector<T> &t, Args &&...args) {
+        auto sql = generate_insert_sql<T>(true);
 
         return insert_impl(sql, t, std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
     constexpr int update(const T &t, Args &&...args) {
-        std::string sql = generate_insert_sql<T>(true);
+        auto sql = generate_insert_sql<T>(true);
         return insert_impl(sql, t, std::forward<Args>(args)...);
     }
+
+
 
     template<typename T, typename... Args>
     constexpr bool delete_records(Args &&...where_condiction) {
@@ -152,14 +157,16 @@ public:
         return (int) mysql_affected_rows(con_);
     }
 
+
+
     // for tuple and string with args...
     template<typename T, typename Arg, typename... Args>
-    constexpr std::enable_if_t<!iguana::is_reflection_v<T>, std::vector<T>>
+    std::enable_if_t<!iguana::is_reflection_v<T>, std::vector<T>>
     query(const Arg &s, Args &&...args) {
         static_assert(iguana::is_tuple<T>::value);
         constexpr auto SIZE = std::tuple_size_v<T>;
 
-        std::string sql = s;
+        auto sql = s;
         constexpr auto Args_Size = sizeof...(Args);
         if (Args_Size != 0) {
             if (Args_Size != std::count(sql.begin(), sql.end(), '?')) {
@@ -182,7 +189,7 @@ public:
             return {};
         }
 
-        auto guard = guard_statment(stmt_);
+        auto guard = GuardStatement_MYSQL(stmt_);
 
         std::array<MYSQL_BIND, result_size<T>::value> param_binds = {};
         std::list<std::vector<char>> mp;
@@ -251,13 +258,12 @@ public:
                 std::make_index_sequence<SIZE>{});
 
         if (mysql_stmt_bind_result(stmt_, &param_binds[0])) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
+            // fprintf(stderr, "%s\n", mysql_error(con_));
             has_error_ = true;
             return {};
         }
 
         if (mysql_stmt_execute(stmt_)) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             has_error_ = true;
             return {};
         }
@@ -300,9 +306,9 @@ public:
 
     // if there is a sql error, how to tell the user? throw exception?
     template<typename T, typename... Args>
-    constexpr std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>>
+    std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>>
     query(Args &&...args) {
-        std::string sql = generate_query_sql<T>(args...);
+        auto sql = generate_query_sql<T>(args...);
         constexpr auto SIZE = iguana::get_value<T>();
 
         stmt_ = mysql_stmt_init(con_);
@@ -316,7 +322,7 @@ public:
             return {};
         }
 
-        auto guard = guard_statment(stmt_);
+        auto guard = GuardStatement_MYSQL(stmt_);
 
         std::array<MYSQL_BIND, SIZE> param_binds = {};
         std::map<size_t, std::vector<char>> mp;
@@ -356,13 +362,11 @@ public:
         }
 
         if (mysql_stmt_bind_result(stmt_, &param_binds[0])) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             has_error_ = true;
             return {};
         }
 
         if (mysql_stmt_execute(stmt_)) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             has_error_ = true;
             return {};
         }
@@ -385,7 +389,7 @@ public:
             }
 
             v.push_back(std::move(t));
-            iguana::for_each(t, [&mp, &t](auto item, auto i) {
+            iguana::for_each(t, [/*&mp, */&t](auto item, auto i) {
                 using U = std::remove_reference_t<decltype(std::declval<T>().*item)>;
                 if constexpr (std::is_arithmetic_v<U>) {
                     memset(&(t.*item), 0, sizeof(U));
@@ -422,7 +426,6 @@ public:
 
     bool commit() {
         if (mysql_query(con_, "COMMIT")) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             return false;
         }
 
@@ -431,7 +434,6 @@ public:
 
     bool rollback() {
         if (mysql_query(con_, "ROLLBACK")) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             return false;
         }
 
@@ -463,10 +465,7 @@ private:
         for (size_t i = 0; i < arr_size; ++i) {
             auto field_name = arr[i];
             bool has_add_field = false;
-            for_each0(
-                    tp,
-                    [&sql, &i, &has_add_field, field_name, type_name_arr, name,
-                            this](auto item) {
+            for_each0( tp,  [&sql, &i, &has_add_field, field_name, type_name_arr, name  /*,this*/](auto item) {
                         if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
                             if (item.fields.find(field_name.data()) == item.fields.end())
                                 return;
@@ -559,15 +558,13 @@ private:
         std::string auto_key = (it == auto_key_map_.end()) ? "" : it->second;
 
         iguana::for_each(
-                t, [&t, &param_binds, &auto_key, this](const auto &v, auto i) {
-                    /*if (!auto_key.empty() && auto_key ==
-                       iguana::get_name<T>(decltype(i)::value).data()) return;*/
+                t, [&t, &param_binds, /*&auto_key,*/ this](const auto &v, auto i) {
+                    /*if (!auto_key.empty() && auto_key ==iguana::get_name<T>(decltype(i)::value).data()) return;*/
 
-                    set_param_bind(param_binds, t.*v);
+                    this->set_param_bind(param_binds, t.*v);
                 });
 
         if (mysql_stmt_bind_param(stmt_, &param_binds[0])) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             return INT_MIN;
         }
 
@@ -585,27 +582,26 @@ private:
     }
 
 
-    struct guard_statment
+    struct GuardStatement_MYSQL
     {
-        guard_statment(MYSQL_STMT *stmt) : stmt_(stmt) {
+        GuardStatement_MYSQL(MYSQL_STMT *stmt) : stmt_(stmt) {
         }
 
         MYSQL_STMT *stmt_ = nullptr;
         int status_ = 0;
 
-        ~guard_statment() {
+        ~GuardStatement_MYSQL() {
             if (stmt_ != nullptr)
                 status_ = mysql_stmt_close(stmt_);
-
             if (status_)
-                fprintf(stderr, "close statment error code %d\n", status_);
+                fprintf(stderr, "close statement error code %d\n", status_);
         }
+
     };
 
 
     template<typename T, typename... Args>
-    constexpr int insert_impl(const std::string &sql, const T &t,
-                              Args &&...args) {
+    int insert_impl(const std::string &sql, const T &t, Args &&...args) {
         stmt_ = mysql_stmt_init(con_);
         if (!stmt_)
             return INT_MIN;
@@ -614,7 +610,7 @@ private:
             return INT_MIN;
         }
 
-        auto guard = guard_statment(stmt_);
+        auto guard = GuardStatement_MYSQL(stmt_);
 
         if (stmt_execute(t) < 0)
             return INT_MIN;
@@ -623,7 +619,7 @@ private:
     }
 
     template<typename T, typename... Args>
-    constexpr int insert_impl(const std::string &sql, const std::vector<T> &t,
+    int insert_impl(const std::string &sql, const std::vector<T> &t,
                               Args &&...args) {
         stmt_ = mysql_stmt_init(con_);
         if (!stmt_)
@@ -633,7 +629,7 @@ private:
             return INT_MIN;
         }
 
-        auto guard = guard_statment(stmt_);
+        auto guard = GuardStatement_MYSQL(stmt_);
 
         // transaction
         bool b = begin();

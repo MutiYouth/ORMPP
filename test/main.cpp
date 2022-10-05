@@ -319,9 +319,9 @@ TEST_CASE(orm_insert_query) {
 
 
 #ifdef ORMPP_ENABLE_PG
-    dbng <postgresql> postgres;
-    TEST_REQUIRE(postgres.connect(ip, "root", "12345", "testdb"));
-    auto vv1 = postgres.query(FID(simple::id), "<", "5");
+    dbng <postgresql> pg_db;
+    TEST_REQUIRE(pg_db.connect(ip, "root", "12345", "testdb"));
+    auto vv1 = pg_db.query(FID(simple::id), "<", "5");
 #endif
 
 #ifdef ORMPP_ENABLE_SQLITE3
@@ -333,11 +333,11 @@ TEST_CASE(orm_insert_query) {
     // auto key
     {
 #ifdef ORMPP_ENABLE_PG
-        TEST_REQUIRE(postgres.create_datatable<student>(auto_key, not_null));
-        TEST_CHECK(postgres.insert(s) == 1);
-        auto result2 = postgres.query<student>();
+        TEST_REQUIRE(pg_db.create_datatable<student>(auto_key, not_null));
+        TEST_CHECK(pg_db.insert(s) == 1);
+        auto result2 = pg_db.query<student>();
         TEST_CHECK(result2.size() == 1);
-        TEST_CHECK(postgres.insert(v) == 2);
+        TEST_CHECK(pg_db.insert(v) == 2);
 #endif
 
 #ifdef ORMPP_ENABLE_SQLITE3
@@ -385,12 +385,12 @@ TEST_CASE(orm_insert_query) {
 #endif
 
 #ifdef ORMPP_ENABLE_PG
-        TEST_REQUIRE(postgres.create_datatable<student>(key, not_null));
-        TEST_CHECK(postgres.insert(s) == 1);
-        auto result2 = postgres.query<student>();
+        TEST_REQUIRE(pg_db.create_datatable<student>(key, not_null));
+        TEST_CHECK(pg_db.insert(s) == 1);
+        auto result2 = pg_db.query<student>();
         TEST_CHECK(result2.size() == 1);
-        TEST_CHECK(postgres.delete_records<student>());
-        TEST_CHECK(postgres.insert(v) == 2);
+        TEST_CHECK(pg_db.delete_records<student>());
+        TEST_CHECK(pg_db.insert(v) == 2);
 #endif
 
 #ifdef ORMPP_ENABLE_SQLITE3

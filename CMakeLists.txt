@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(ormpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17")
-set(ENABLE_MYSQL OFF)
+set(ENABLE_MYSQL ON)
 set(ENABLE_PG ON)
 set(ENABLE_SQLITE3 OFF)
 
@@ -14,6 +14,7 @@ set(SOURCE_FILES
         src/core/connection_pool.hpp
         src/core/ormpp_cfg.hpp
         src/dbs/pg_types.h
+        test/main.cpp
         )
 if (ENABLE_MYSQL)
     add_definitions(-DORMPP_ENABLE_MYSQL)
@@ -32,7 +33,7 @@ endif ()
 
 
 
-# add exe
+# add test exe
 include_directories(
     ${CMAKE_SOURCE_DIR}/thirdparty/iguana
 )
@@ -48,7 +49,7 @@ if (ENABLE_PG)
     target_link_libraries(ormpp pq)
 endif ()
 
-# add test
+# add
 add_subdirectory(test)
 
 # add examples
