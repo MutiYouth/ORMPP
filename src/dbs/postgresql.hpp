@@ -146,6 +146,7 @@ public:
         auto key = it == key_map_.end() ? "" : it->second;
 
 
+        // delete
         // WENG bug found 22-10-5 11:02: 没有主键时，应该考虑是要生成全要素值。或者update时，不进行删除，直接进行更新。
         auto condition = get_condition(t, key, std::forward<Args...>(condiction_fields_args)...);
         if (!begin())
@@ -156,6 +157,7 @@ public:
             return INT_MIN;
         }
 
+        // insert
         if (insert(t) < 0) {
             rollback();
             return INT_MIN;

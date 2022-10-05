@@ -128,16 +128,16 @@ public:
 
     // WENG bug found 22-10-5 15:18: 更新异常！
     template<typename T, typename... Args>
-    constexpr int update(const std::vector<T> &t, Args &&...args) {
+    constexpr int update(const std::vector<T> &t, Args &&...condiction_fields_args) {
         auto sql = generate_insert_sql<T>(true);
 
-        return insert_impl(sql, t, std::forward<Args>(args)...);
+        return insert_impl(sql, t, std::forward<Args>(condiction_fields_args)...);
     }
 
     template<typename T, typename... Args>
-    constexpr int update(const T &t, Args &&...args) {
+    constexpr int update(const T &t, Args &&...condiction_fields_args) {
         auto sql = generate_insert_sql<T>(true);
-        return insert_impl(sql, t, std::forward<Args>(args)...);
+        return insert_impl(sql, t, std::forward<Args>(condiction_fields_args)...);
     }
 
 
@@ -258,7 +258,7 @@ public:
                 std::make_index_sequence<SIZE>{});
 
         if (mysql_stmt_bind_result(stmt_, &param_binds[0])) {
-            // fprintf(stderr, "%s\n", mysql_error(con_));
+            fprintf(stderr, "%s\n", mysql_error(con_));
             has_error_ = true;
             return {};
         }
@@ -306,8 +306,7 @@ public:
 
     // if there is a sql error, how to tell the user? throw exception?
     template<typename T, typename... Args>
-    std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>>
-    query(Args &&...args) {
+    std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>> query(Args &&...args) {
         auto sql = generate_query_sql<T>(args...);
         constexpr auto SIZE = iguana::get_value<T>();
 
@@ -417,7 +416,6 @@ public:
     // transaction
     bool begin() {
         if (mysql_query(con_, "BEGIN")) {
-            //                fprintf(stderr, "%s\n", mysql_error(con_));
             return false;
         }
 
@@ -527,8 +525,7 @@ private:
     }
 
     template<typename T>
-    constexpr void set_param_bind(std::vector<MYSQL_BIND> &param_binds,
-                                  T &&value) {
+    constexpr void set_param_bind(std::vector<MYSQL_BIND> &param_binds, T &&value) {
         MYSQL_BIND param = {};
 
         using U = std::remove_const_t<std::remove_reference_t<T>>;
@@ -619,8 +616,7 @@ private:
     }
 
     template<typename T, typename... Args>
-    int insert_impl(const std::string &sql, const std::vector<T> &t,
-                              Args &&...args) {
+    int insert_impl(const std::string &sql, const std::vector<T> &t, Args &&...args) {
         stmt_ = mysql_stmt_init(con_);
         if (!stmt_)
             return INT_MIN;

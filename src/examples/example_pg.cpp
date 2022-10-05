@@ -39,7 +39,6 @@ int main() {
     pg_db.update(p, "id");
     pg_db.update(v, "id");
 
-    // WENG TODO 22-10-5: 查询失败
     auto result = pg_db.query<person>();
     for (auto &person: result) {
         std::cout << person.id << " " << person.name << " " << person.age << std::endl;

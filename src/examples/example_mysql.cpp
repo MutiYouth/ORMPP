@@ -43,12 +43,11 @@ int main() {
         std::cout << person.id << " " << person.name << " " << person.age << std::endl;
     }
 
-    mysql_db.delete_records<person>();
-
     // transaction
+    mysql_db.delete_records<person>();
     mysql_db.begin();
     for (int i = 0; i < 10; ++i) {
-        person s = {i, "tom", 19};
+        person s = {i, "tom", 10 + i};
         if (!mysql_db.insert(s)) {
             mysql_db.rollback();
             return -1;
