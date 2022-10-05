@@ -83,21 +83,27 @@ make -j6
 # sudo make install
 ```
 
-## 使用pg时
+###  使用pg时
 postgresql.hpp编译过程中，如果`postgresql/libpq-fe.h`找不到，可尝试安装libpq：
 ```
 apt-get install libpq-dev
 ```
 
+### 使用 mysql时
+?
+```
+apt-get install mysql-client
+```
 
-备注：
+
+### 备注
 * 编译器支持<br/>
 需要支持C++17的编译器, 符合要求的编译器版本有：<br/>
 linux gcc7.2, clang4.0; <br/>
 windows >vs2017 update5
 
 * 数据库的安装
-因为ormpp支持mysql, postgresql和sqlite，所以需要安装mysql，postgresql，postgresql官方提供的libpq以及sqlite3，安装之后，在CMakeLists.txt配置目录和库路径。
+因为ormpp支持mysql, postgresql和sqlite，所以需要安装mysql，postgresql官方提供的libpq, 以及sqlite3，安装之后，在CMakeLists.txt配置目录和库路径。
 
 * 依赖的第三方库
 部分用的是[iguana](https://github.com/qicosmos/iguana.git).

@@ -14,24 +14,24 @@
 #include <thread>
 
 #ifdef ORMPP_ENABLE_MYSQL
-#include "../dbs/mysql.hpp"
+#include "../src/dbs/mysql.hpp"
 #endif
 #ifdef ORMPP_ENABLE_SQLITE3
-#include "../dbs/sqlite.hpp"
+#include "../src/dbs/sqlite.hpp"
 #endif
 #ifdef ORMPP_ENABLE_PG
 
-#include "../dbs/postgresql.hpp"
+#include "../src/dbs/postgresql.hpp"
 
 #endif
 
-#include "connection_pool.hpp"
-#include "dbng.hpp"
-#include "ormpp_cfg.hpp"
+#include "../src/core/connection_pool.hpp"
+#include "../src/core/dbng.hpp"
+#include "../src/core/ormpp_cfg.hpp"
 
 #define TEST_MAIN
 
-#include "../../test/unit_test.hpp"
+#include "unit_test.hpp"
 
 using namespace std::string_literals;
 
@@ -118,8 +118,7 @@ struct dummy
     int id;
     std::string name;
 };
-REFLECTION(dummy, id, name
-);
+REFLECTION(dummy, id, name);
 
 #ifdef ORMPP_ENABLE_MYSQL
 TEST_CASE(mysql_exist_tb) {

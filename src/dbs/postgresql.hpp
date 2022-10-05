@@ -36,7 +36,7 @@ public:
         disconnect();
     }
 
-    // ip, user, pwd, db, timeout  the sequence must be fixed like this
+    // ip, user, pwd, db, port, timeout  the sequence must be fixed like this
     template<typename... Args>
     bool connect(Args &&...args) {
         auto sql = ""s;
@@ -73,19 +73,9 @@ public:
         return false; // todo
     }
 
+    // datatable operate
     template<typename T, typename... Args>
     constexpr auto create_datatable(Args &&...args) {
-        //            std::string droptb = "DROP TABLE IF EXISTS ";
-        //            droptb += iguana::get_name<T>();
-        //
-        //            res_ = PQexec(con_, droptb.data());
-        //            if (PQresultStatus(res_) != PGRES_COMMAND_OK){
-        //                PQclear(res_);
-        //                return false;
-        //            }
-        //
-        //            PQclear(res_);
-
         auto sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
         res_ = PQexec(con_, sql.data());
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
@@ -98,9 +88,23 @@ public:
         return true;
     }
 
+    template<typename T>
+    bool drop_table() {
+        auto drop_tb = "DROP TABLE IF EXISTS " + iguana::get_name<T>() + " cascade; ";
+        res_ = PQexec(con_, drop_tb.data());
+        if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
+            PQclear(res_);
+            return false;
+        }
+        PQclear(res_);
+
+        return true;
+    }
+
+
+    // insert
     template<typename T, typename... Args>
     constexpr int insert(const T &t, Args &&...args) {
-        //            std::string sql = generate_pq_insert_sql<T>(false);
         auto sql = generate_auto_insert_sql<T>(false);
         if (!prepare<T>(sql))
             return INT_MIN;
@@ -110,7 +114,6 @@ public:
 
     template<typename T, typename... Args>
     constexpr int insert(const std::vector<T> &v, Args &&...args) {
-        //            std::string sql = generate_pq_insert_sql<T>(false);
         auto sql = generate_auto_insert_sql<T>(false);
 
         if (!begin())
@@ -133,18 +136,18 @@ public:
         return (int) v.size();
     }
 
-    // if there is no key in a table, you can set some fields as a condition in
-    // the args...
+
+    // update
     template<typename T, typename... Args>
-    constexpr int update(const T &t, Args &&...args) {
+    constexpr int update(const T &t, Args &&...condiction_fields_args) {
         // transaction, firstly delete, secondly insert
         auto name = iguana::get_name<T>();
         auto it = key_map_.find(name.data());
         auto key = it == key_map_.end() ? "" : it->second;
 
 
-        // WENG TODO 22-10-5: 没有主键时，应该考虑是要生成全要素值。或者update时，不进行删除，直接进行更新。
-        auto condition = get_condition(t, key, std::forward<Args...>(args)...);
+        // WENG bug found 22-10-5 11:02: 没有主键时，应该考虑是要生成全要素值。或者update时，不进行删除，直接进行更新。
+        auto condition = get_condition(t, key, std::forward<Args...>(condiction_fields_args)...);
         if (!begin())
             return INT_MIN;
 
@@ -193,6 +196,8 @@ public:
         return (int) v.size();
     }
 
+
+    // query
     template<typename T, typename... Args>
     constexpr std::enable_if_t<iguana::is_reflection_v<T>, std::vector<T>> query(Args &&...args) {
         auto sql = generate_query_sql<T>(std::forward<Args>(args)...);
@@ -212,8 +217,8 @@ public:
 
         for (auto i = 0; i < ntuples; i++) {
             T t = {};
-            iguana::for_each(t, [this, i, &t](auto item, auto I) {
-                assign(t.*item, i, (int) decltype(I)::value);
+            iguana::for_each(t, [i, &t, this](auto item, auto I) {
+                this->assign(t.*item, i, (int) decltype(I)::value);
             });
             v.push_back(std::move(t));
         }
@@ -275,6 +280,8 @@ public:
         return v;
     }
 
+
+    // delete
     template<typename T, typename... Args>
     constexpr bool delete_records(Args &&...where_condiction) {
         auto sql = generate_delete_sql<T>(std::forward<Args>(where_condiction)...);
@@ -288,24 +295,26 @@ public:
         return true;
     }
 
+
     // just support execute string sql without placeholders
     auto execute(const std::string &sql) {
         res_ = PQexec(con_, sql.data());
         auto guard = guard_result(res_);
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
-            //                std::cout<<PQerrorMessage(con_)<<std::endl;
+            
             return false;
         }
 
         return true;
     }
 
+
     // transaction
     bool begin() {
         res_ = PQexec(con_, "begin;");
         auto guard = guard_result(res_);
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
-            //                std::cout<<PQerrorMessage(con_)<<std::endl;
+            // std::cout << PQerrorMessage(con_) << std::endl;
             return false;
         }
 
@@ -316,7 +325,6 @@ public:
         res_ = PQexec(con_, "commit;");
         auto guard = guard_result(res_);
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
-            //                std::cout<<PQerrorMessage(con_)<<std::endl;
             return false;
         }
 
@@ -327,14 +335,41 @@ public:
         res_ = PQexec(con_, "rollback;");
         auto guard = guard_result(res_);
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
-            //                std::cout<<PQerrorMessage(con_)<<std::endl;
             return false;
         }
 
         return true;
     }
 
+
+
 private:
+    struct guard_result
+    {
+        guard_result(PGresult *res) : res_(res) {
+        }
+
+        void dismiss() {
+            dismiss_ = true;
+        }
+
+        ~guard_result() {
+            if (dismiss_)
+                return;
+
+            if (res_ != nullptr)
+                status_ = PQresultStatus(res_);
+
+            if (status_ != PGRES_COMMAND_OK)
+                std::cout << PQresultErrorMessage(res_) << std::endl;
+        }
+
+    private:
+        PGresult *res_ = nullptr;
+        int status_ = 0;
+        bool dismiss_ = false;
+    };
+
     template<typename T>
     auto to_str(T &&t) {
         if constexpr (std::is_integral_v<std::decay_t<T>>)
@@ -342,6 +377,32 @@ private:
         else
             return t;
     }
+
+
+    template<typename T>
+    constexpr void assign(T &&value, int row, int i) {
+        using U = std::remove_const_t<std::remove_reference_t<T>>;
+        if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) {
+            value = std::atoi(PQgetvalue(res_, row, i));
+        }
+        else if constexpr (iguana::is_int64_v<U>) {
+            value = std::atoll(PQgetvalue(res_, row, i));
+        }
+        else if constexpr (std::is_floating_point_v<U>) {
+            value = std::atof(PQgetvalue(res_, row, i));
+        }
+        else if constexpr (std::is_same_v<std::string, U>) {
+            value = PQgetvalue(res_, row, i);
+        }
+        else if constexpr (is_char_array_v<U>) {
+            auto p = PQgetvalue(res_, row, i);
+            memcpy(value, p, sizeof(U));
+        }
+        else {
+            std::cout << "this type has not supported yet" << std::endl;
+        }
+    }
+
 
     template<typename Tuple>
     std::string generate_conn_sql(const Tuple &tp) {
@@ -374,34 +435,6 @@ private:
         return sql;
     }
 
-
-    struct guard_result
-    {
-        guard_result(PGresult *res) : res_(res) {
-        }
-
-        void dismiss() {
-            dismiss_ = true;
-        }
-
-        ~guard_result() {
-            if (dismiss_)
-                return;
-
-            if (res_ != nullptr)
-                status_ = PQresultStatus(res_);
-
-            if (status_ != PGRES_COMMAND_OK)
-                std::cout << PQresultErrorMessage(res_) << std::endl;
-        }
-
-    private:
-        PGresult *res_ = nullptr;
-        int status_ = 0;
-        bool dismiss_ = false;
-    };
-
-
     template<typename T, typename... Args>
     std::string generate_createtb_sql(Args &&...args) {
         const auto type_name_arr = get_type_names<T>(DBType::postgresql);
@@ -417,9 +450,7 @@ private:
         if constexpr (SIZE > 0) {
             // using U = std::tuple<std::decay_t <Args>...>; //the code can't compile
             // in vs2017, why?maybe args... in if constexpr?
-            static_assert(!(iguana::has_type<ormpp_key, U>::value &&
-                            iguana::has_type<ormpp_auto_key, U>::value),
-                          "should only one key");
+            static_assert(!(iguana::has_type<ormpp_key, U>::value &&  iguana::has_type<ormpp_auto_key, U>::value), "should only one key");
         }
 
         // at first sort the args, make sure the key always in the head
@@ -428,57 +459,56 @@ private:
         for (size_t i = 0; i < arr_size; ++i) {
             auto field_name = arr[i];
             bool has_add_field = false;
-            iguana::for_each(tp,
-                             [&sql, &i, &has_add_field, field_name, type_name_arr, name, this](auto item, auto I) {
-                                 if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
-                                     if (item.fields.find(field_name.data()) == item.fields.end())
-                                         return;
-                                 }
-                                 else {
-                                     if (item.fields != field_name.data())
-                                         return;
-                                 }
+            iguana::for_each(tp, [&sql, &i, &has_add_field, field_name, type_name_arr, name, this](auto item, auto I) {
 
-                                 if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
-                                     if (!has_add_field) {
-                                         append(sql, field_name.data(), " ", type_name_arr[i]);
-                                         has_add_field = true;
-                                     }
+                if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
+                    if (item.fields.find(field_name.data()) == item.fields.end())
+                        return;
+                }
+                else {
+                    if (item.fields != field_name.data())
+                        return;
+                }
 
-                                     append(sql, " NOT NULL");
-                                 }
-                                 else if constexpr (std::is_same_v<decltype(item), ormpp_key>) {
-                                     if (!has_add_field) {
-                                         append(sql, field_name.data(), " ", type_name_arr[i]);
-                                         has_add_field = true;
-                                     }
-                                     append(sql, " PRIMARY KEY ");
+                if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
+                    if (!has_add_field) {
+                        append(sql, field_name.data(), " ", type_name_arr[i]);
+                        has_add_field = true;
+                    }
 
-                                     key_map_[name.data()] = item.fields;
-                                 }
-                                 else if constexpr (std::is_same_v<decltype(item),
-                                         ormpp_auto_key>) {
-                                     if (!has_add_field) {
-                                         append(sql, field_name.data(), " ");
-                                         has_add_field = true;
-                                     }
-                                     append(sql, " serial primary key");
-                                     auto_key_map_[name.data()] = item.fields;
-                                     key_map_[name.data()] = item.fields;
-                                 }
-                                 else if constexpr (std::is_same_v<decltype(item), ormpp_unique>) {
-                                     if (!has_add_field) {
-                                         append(sql, field_name.data(), " ", type_name_arr[i]);
-                                     }
+                    append(sql, " NOT NULL");
+                }
+                else if constexpr (std::is_same_v<decltype(item), ormpp_key>) {
+                    if (!has_add_field) {
+                        append(sql, field_name.data(), " ", type_name_arr[i]);
+                        has_add_field = true;
+                    }
+                    append(sql, " PRIMARY KEY ");
 
-                                     append(sql, ", UNIQUE(", item.fields, ")");
-                                     has_add_field = true;
-                                 }
-                                 else {
-                                     append(sql, field_name.data(), " ", type_name_arr[i]);
-                                 }
-                             },
-                             std::make_index_sequence<SIZE>{});
+                    key_map_[name.data()] = item.fields;
+                }
+                else if constexpr (std::is_same_v<decltype(item),
+                        ormpp_auto_key>) {
+                    if (!has_add_field) {
+                        append(sql, field_name.data(), " ");
+                        has_add_field = true;
+                    }
+                    append(sql, " serial primary key");
+                    auto_key_map_[name.data()] = item.fields;
+                    key_map_[name.data()] = item.fields;
+                }
+                else if constexpr (std::is_same_v<decltype(item), ormpp_unique>) {
+                    if (!has_add_field) {
+                        append(sql, field_name.data(), " ", type_name_arr[i]);
+                    }
+
+                    append(sql, ", UNIQUE(", item.fields, ")");
+                    has_add_field = true;
+                }
+                else {
+                    append(sql, field_name.data(), " ", type_name_arr[i]);
+                }
+            }, std::make_index_sequence<SIZE>{});
 
             if (!has_add_field) {
                 append(sql, field_name.data(), " ", type_name_arr[i]);
@@ -492,6 +522,9 @@ private:
 
         return sql;
     }
+
+
+    #pragma region INSERT_ABOUT
 
     template<typename T>
     bool prepare(const std::string &sql) {
@@ -532,10 +565,10 @@ private:
         auto it = auto_key_map_.find(iguana::get_name<T>().data());
         std::string auto_key = (it == auto_key_map_.end()) ? "" : it->second;
 
-        iguana::for_each(t, [&t, &param_values, &auto_key, this](auto item, auto i) {
-            /*if(!auto_key.empty()&&auto_key==iguana::get_name<T>(decltype(i)::value).data())
-                return;*/
-            set_param_values(param_values, t.*item);
+        iguana::for_each(t, [&t, &param_values, /*&auto_key,*/ this](auto item, auto i) {
+            // if (!auto_key.empty() && auto_key == iguana::get_name<T>(decltype(i)::value).data())
+            //     return;
+            this->set_param_values(param_values, t.*item);
         });
 
         if (param_values.empty())
@@ -561,8 +594,7 @@ private:
     }
 
     template<typename T>
-    void set_param_values(std::vector<std::vector<char>> &param_values,
-                          T &&value) {
+    void set_param_values(std::vector<std::vector<char>> &param_values, T &&value) {
         using U = std::remove_const_t<std::remove_reference_t<T>>;
         if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) {
             std::vector<char> temp(20, 0);
@@ -581,8 +613,7 @@ private:
         }
         else if constexpr (std::is_same_v<std::string, U>) {
             std::vector<char> temp = {};
-            std::copy(value.data(), value.data() + value.size() + 1,
-                      std::back_inserter(temp));
+            std::copy(value.data(), value.data() + value.size() + 1, std::back_inserter(temp));
             //                    std::cout<<value.size()<<std::endl;
             param_values.push_back(std::move(temp));
         }
@@ -593,82 +624,6 @@ private:
         }
         else {
             std::cout << "this type has not supported yet" << std::endl;
-        }
-    }
-
-    template<typename T>
-    constexpr void assign(T &&value, int row, int i) {
-        using U = std::remove_const_t<std::remove_reference_t<T>>;
-        if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) {
-            value = std::atoi(PQgetvalue(res_, row, i));
-        }
-        else if constexpr (iguana::is_int64_v<U>) {
-            value = std::atoll(PQgetvalue(res_, row, i));
-        }
-        else if constexpr (std::is_floating_point_v<U>) {
-            value = std::atof(PQgetvalue(res_, row, i));
-        }
-        else if constexpr (std::is_same_v<std::string, U>) {
-            value = PQgetvalue(res_, row, i);
-        }
-        else if constexpr (is_char_array_v<U>) {
-            auto p = PQgetvalue(res_, row, i);
-            memcpy(value, p, sizeof(U));
-        }
-        else {
-            std::cout << "this type has not supported yet" << std::endl;
-        }
-    }
-
-    template<typename T, typename... Args>
-    std::string get_condition(const T &t, const std::string &key,
-                              Args &&...args) {
-        std::string result = "";
-        constexpr auto SIZE = iguana::get_value<T>();
-        iguana::for_each(t, [&](auto &item, auto i) {
-            constexpr auto Idx = decltype(i)::value;
-            using U = std::remove_reference_t<decltype(iguana::get<Idx>(
-                    std::declval<T>()))>;
-            if (!key.empty() && key == iguana::get_name<T, Idx>().data()) {
-                if constexpr (std::is_arithmetic_v<U>) {
-                    append(result, iguana::get_name<T, Idx>().data(), "=",
-                           std::to_string(t.*item));
-                }
-                else if constexpr (std::is_same_v<std::string, U>) {
-                    append(result, iguana::get_name<T, Idx>().data(), "=", t.*item);
-                }
-            }
-
-            // if constexpr (sizeof...(Args)>0){
-            build_condition_by_key<T, Idx>(result, t.*item, args...);
-            //(test(args), ...);
-            //	(build_condition_by_key_impl(result, t.*item, args),...);
-            ////can't pass U in vs2017
-            //}
-        });
-
-        return result;
-    }
-
-    template<typename T, size_t Idx, typename V, typename... Args>
-    void build_condition_by_key(std::string &result, const V &t, Args... args) {
-        (build_condition_by_key<T, Idx>(result, t, args), ...);
-    }
-
-    template<typename T, size_t Idx, typename V, typename W>
-    void build_condition_by_key_impl(std::string &result, const V &val, W &key) {
-        using U =
-                std::remove_reference_t<decltype(iguana::get<Idx>(std::declval<T>()))>;
-        if (key == iguana::get_name<T, Idx>().data()) {
-            if constexpr (std::is_arithmetic_v<U>) {
-                append(result, " and ");
-                append(result, iguana::get_name<T, Idx>().data(), "=",
-                       std::to_string(val));
-            }
-            else if constexpr (std::is_same_v<std::string, U>) {
-                append(result, " and ");
-                append(result, iguana::get_name<T, Idx>().data(), "=", val);
-            }
         }
     }
 
@@ -709,6 +664,66 @@ private:
         return sql;
     }
 
+    #pragma endregion INSERT_ABOUT
+
+    #pragma region GET_CONDICTION
+
+    template<typename T, typename... Args>
+    std::string get_condition(const T &t, const std::string &key, Args &&...condiction_fields_args) {
+        std::string result = "";
+
+        iguana::for_each(t, [&](auto &item, auto i) {
+            // decltype，在 C++ 中，作为 操作符 ，用于查询 表达式 的数据类型。
+            // decltype(i)::value 表示item在T中定义可反射属性字段中的顺序值。
+            constexpr auto Idx = decltype(i)::value;
+            // 获取t对象的第i个属性项，其数据类型，并定义为U
+            // std::declval 返回某个类型T的右值引用，不管该类型是否有默认构造函数或者该类型是否可以创建对象。
+            using U = std::remove_reference_t<decltype(iguana::get<Idx>(std::declval<T>()))>;
+
+            // 如何此属性项和KEY名一致
+            if (!key.empty() && key == iguana::get_name<T, Idx>().data()) {
+                if constexpr (std::is_arithmetic_v<U>) {  // 若U为算术类型（即整数类型或浮点类型）
+                    append(result, iguana::get_name<T, Idx>().data(), "=", std::to_string(t.*item));
+                }
+                else if constexpr (std::is_same_v<std::string, U>) {
+                    append(result, iguana::get_name<T, Idx>().data(), "=", t.*item);
+                }
+
+                return;
+            }
+
+            // 对于其他用于表示条件key，的列名属性项迭代时
+            build_condition_by_col_ref_key<T, Idx>(result, t.*item, condiction_fields_args...);
+        });
+
+        return result;
+    }
+
+    template<typename T, size_t Idx, typename V, typename... Args>
+    void build_condition_by_col_ref_key(std::string &result, const V &t, Args... condiction_fields_args) {
+        (build_condition_by_col_ref_key_impl<T, Idx>(result, t, condiction_fields_args), ...);
+    }
+
+    template<typename T, size_t Idx, typename V, typename W>
+    void build_condition_by_col_ref_key_impl(std::string &result, const V &val, W &col_ref_key) {
+        using U = std::remove_reference_t<decltype(iguana::get<Idx>(std::declval<T>()))>;
+        if (col_ref_key == iguana::get_name<T, Idx>().data()) {
+            if constexpr (std::is_arithmetic_v<U>) {
+                append(result, " and ");
+                append(result, iguana::get_name<T, Idx>().data(), "=",
+                       std::to_string(val));
+            }
+            else if constexpr (std::is_same_v<std::string, U>) {
+                append(result, " and ");
+                append(result, iguana::get_name<T, Idx>().data(), "=", val);
+            }
+        }
+    }
+
+    #pragma endregion GET_CONDICTION
+
+
+private:
     PGresult *res_ = nullptr;
     PGconn *con_ = nullptr;
     std::map<std::string, std::string> auto_key_map_;

@@ -53,17 +53,21 @@ public:
 
     template<typename T, typename... Args>
     bool create_datatable(Args &&...args) {
-        //            std::string droptb = "DROP TABLE IF EXISTS ";
-        //            droptb += iguana::get_name<T>();
-        //            if (sqlite3_exec(handle_, droptb.data(), nullptr, nullptr,
-        //            nullptr)!=SQLITE_OK) {
-        //                return false;
-        //            }
-
         std::string sql = generate_createtb_sql<T>(std::forward<Args>(args)...);
         if (sqlite3_exec(handle_, sql.data(), nullptr, nullptr, nullptr) !=
             SQLITE_OK) {
             set_last_error(sqlite3_errmsg(handle_));
+            return false;
+        }
+
+        return true;
+    }
+
+    template<typename T>
+    bool drop_table() {
+        auto drop_tb = "DROP TABLE IF EXISTS " + iguana::get_name<T>() + " cascade; ";
+        if (sqlite3_exec(handle_, drop_tb.data(), nullptr, nullptr,
+                         nullptr) != SQLITE_OK) {
             return false;
         }
 

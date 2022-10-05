@@ -1,22 +1,33 @@
 //
 // Created by qiyu on 10/23/17.
 //
+
+// mysql
 #ifdef _MSC_VER
 #ifdef ORMPP_ENABLE_MYSQL
 #include <include/mysql.h>
 #endif
+
 #else
 #ifdef ORMPP_ENABLE_MYSQL
 #include <mysql/mysql.h>
 #endif
+
 #endif
+
+
+// sqlite3
 #ifdef ORMPP_ENABLE_SQLITE3
 #include <sqlite3.h>
 #endif
 
+// postgresql
 #include "../dbs/pg_types.h"
+
+
 #include <string>
 #include <string_view>
+#include <array>
 
 using namespace std::string_view_literals;
 
@@ -181,8 +192,7 @@ inline auto type_to_name(identity<std::string>) noexcept {
 
 template<size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
-    std::string s = "varchar(" + std::to_string(N) + ")";
-    return s;
+    return "varchar(" + std::to_string(N) + ")";
 }
 } // namespace ormpp_postgresql
 #endif

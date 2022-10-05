@@ -22,7 +22,9 @@ int main() {
     person p2 = {3, "test3", 4};
     std::vector<person> v{p1, p2};
 
+
     dbng<postgresql> pg_db;
+    // ormpp_key key{"id"};
     pg_db.connect("192.168.10.106", "pi", "weng2022", "test");
     pg_db.create_datatable<person>();
 
@@ -30,9 +32,10 @@ int main() {
     pg_db.insert(v);
 
     p.name = "test_1111";
-    // WENG TODO 22-10-5: 更新失败; 更新时，若没有KEY，则会删除所有。
-    pg_db.update(p);
-    pg_db.update(v);
+    // WENG notice 22-10-5 12:31:  如果对象设置了key，则更新时不需要再进行加入条件列名了。
+    //  否则一定要加入足以证明这个对象的条件列名们。
+    pg_db.update(p, "id");
+    pg_db.update(v, "id");
 
     // WENG TODO 22-10-5: 查询失败
     auto result = pg_db.query<person>();

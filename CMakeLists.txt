@@ -7,7 +7,6 @@ set(ENABLE_PG ON)
 set(ENABLE_SQLITE3 OFF)
 
 set(SOURCE_FILES
-        src/core/main.cpp
         src/core/dbng.hpp
         src/core/type_mapping.hpp
         src/core/utility.hpp

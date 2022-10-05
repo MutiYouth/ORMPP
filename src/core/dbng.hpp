@@ -37,6 +37,11 @@ public:
     bool create_datatable(Args &&...args) {
         return db_.template create_datatable<T>(std::forward<Args>(args)...);
     }
+    template<typename T>
+    bool drop_table() {
+        return db_.template drop_table<T>();
+    }
+
 
     template<typename T, typename... Args>
     int insert(const T &t, Args &&...args) {
@@ -48,14 +53,31 @@ public:
         return db_.insert(t, std::forward<Args>(args)...);
     }
 
+    /**
+    * 单个对象的更新
+    * if there is no key in a table, you can set some fields as a condition in the condiction_fields args...
+    * @tparam T
+    * @tparam Args
+    * @param t
+    * @param condiction_fields_args
+    * @return
+    */
     template<typename T, typename... Args>
-    int update(const T &t, Args &&...args) {
-        return db_.update(t, std::forward<Args>(args)...);
+    int update(const T &t, Args &&...condiction_fields_args) {
+        return db_.update(t, std::forward<Args>(condiction_fields_args)...);
     }
 
+    /**
+    * 多个同类vector容器的对象更新
+    * @tparam T
+    * @tparam Args
+    * @param t
+    * @param condiction_fields_args 当没有key时，当前版本要指定可以唯一表示该对象的列名。
+    * @return
+    */
     template<typename T, typename... Args>
-    int update(const std::vector<T> &t, Args &&...args) {
-        return db_.update(t, std::forward<Args>(args)...);
+    int update(const std::vector<T> &t, Args &&...condiction_fields_args) {
+        return db_.update(t, std::forward<Args>(condiction_fields_args)...);
     }
 
     template<typename T, typename... Args>
@@ -64,8 +86,13 @@ public:
                 std::forward<Args>(where_condiction)...);
     }
 
-    // restriction, all the args are string, the first is the where condition,
-    // rest are append conditions
+    /**
+    * 输入条件，进行查询
+    * @tparam T
+    * @tparam Args restriction, all the args are string, the first is the where condition, rest are append conditions
+    * @param args
+    * @return
+    */
     template<typename T, typename... Args>
     std::vector<T> query(Args &&...args) {
         return db_.template query<T>(std::forward<Args>(args)...);

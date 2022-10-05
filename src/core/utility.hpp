@@ -218,8 +218,7 @@ inline void get_sql_conditions(std::string &) {
 }
 
 template<typename... Args>
-inline void get_sql_conditions(std::string &sql, const std::string &arg,
-                               Args &&...args) {
+inline void get_sql_conditions(std::string &sql, const std::string &arg,  Args &&...args) {
     if (arg.find("select") != std::string::npos) {
         sql = arg;
     }
@@ -233,7 +232,6 @@ inline void get_sql_conditions(std::string &sql, const std::string &arg,
 }
 
 template<typename T, typename... Args>
-// WENG TODO 22-10-4: 这里的PG数据库，可能会需要带上数库名，放到表格前面。
 inline std::string generate_query_sql(Args &&...args) {
     constexpr size_t param_size = sizeof...(Args);
     static_assert(param_size == 0 || param_size > 0);

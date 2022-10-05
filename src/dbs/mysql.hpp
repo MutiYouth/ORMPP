@@ -92,6 +92,17 @@ public:
         return true;
     }
 
+    template<typename T>
+    bool drop_table() {
+        auto drop_tb = "DROP TABLE IF EXISTS " + iguana::get_name<T>() + " cascade; ";
+        if (mysql_query(con_, drop_tb.data())) {
+            fprintf(stderr, "%s\n", mysql_error(con_));
+            return false;
+        }
+
+        return true;
+    }
+
     template<typename T, typename... Args>
     constexpr int insert(const std::vector<T> &t, Args &&...args) {
         auto name = get_name<T>();
