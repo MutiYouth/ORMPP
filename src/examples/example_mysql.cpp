@@ -25,7 +25,7 @@ int main() {
 
     dbng<mysql> mysql_db;
     // ormpp_key key{"id"};
-    mysql_db.connect("192.168.10.106", "root", "weng2022", "test");
+    mysql_db.connect("192.168.0.106", "root", "weng2022", "test");
     mysql_db.drop_table<person>();
     mysql_db.create_datatable<person>();
 
@@ -54,4 +54,6 @@ int main() {
         }
     }
     mysql_db.commit();
+
+    std::cout << "Done!" << std::endl;
 }

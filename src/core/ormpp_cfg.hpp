@@ -6,11 +6,13 @@
 #define ORMPP_CONFIG_MANAGER_HPP
 
 #include <fstream>
-#include "iguana/json.hpp"
+#include "iguana/json_writer.hpp"
+#include "iguana/json_reader.hpp"
 #include <string>
 #include <string_view>
 
 namespace ormpp {
+
 struct ormpp_cfg
 {
     std::string db_ip;
@@ -99,8 +101,8 @@ public:
 
         in.read(str.data(), len);
 
-        bool r = iguana::json::from_json(t, str.data(), len);
-        if (!r) {
+        iguana::from_json(t, str.data(), len);
+        if (t.db_ip == "") {
             return false;
         }
 
@@ -117,12 +119,12 @@ public:
     template<typename T>
     inline static bool to_file(T &t, std::string_view file_path) {
         iguana::string_stream ss;
-        iguana::json::to_json(ss, t);
+        iguana::to_json(ss, t);
         std::ofstream out(file_path.data(), std::ios::binary);
         if (!out.is_open()) {
             return false;
         }
-        out.write(ss.str().data(), ss.str().size());
+        out.write(ss.data(), ss.size());
         out.close();
         return true;
     }

@@ -25,7 +25,7 @@ int main() {
 
     dbng<postgresql> pg_db;
     // ormpp_key key{"id"};
-    pg_db.connect("192.168.10.106", "pi", "weng2022", "test");
+    pg_db.connect("192.168.0.106", "pi", "weng2022", "test");
     pg_db.create_datatable<person>();
 
     pg_db.insert(p);
@@ -56,4 +56,6 @@ int main() {
         }
     }
     pg_db.commit();
+    
+    std::cout << "Done!" << std::endl;
 }
