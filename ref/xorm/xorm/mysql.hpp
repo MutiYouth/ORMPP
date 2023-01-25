@@ -808,7 +808,7 @@ public:
     }
 
     MYSQL *get_raw_connetion() {
-        return is_connect_ == true ? conn_ : nullptr;
+        return is_connect_ ? conn_ : nullptr;
     }
 
 private:

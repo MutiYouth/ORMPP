@@ -581,8 +581,7 @@ private:
             param_values_buf.push_back(item.data());
         }
 
-        res_ = PQexecPrepared(con_, "", (int) param_values.size(),
-                              param_values_buf.data(), NULL, NULL, 0);
+        res_ = PQexecPrepared(con_, "", (int) param_values.size(), param_values_buf.data(), NULL, NULL, 0);
 
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
             std::cout << PQresultErrorMessage(res_) << std::endl;
@@ -592,6 +591,7 @@ private:
 
         PQclear(res_);
 
+        // WENG todo 22-10-6: 返回影响的行数。
         return 1;
     }
 
