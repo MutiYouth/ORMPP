@@ -5,12 +5,13 @@
 #ifndef ORM_DBNG_HPP
 #define ORM_DBNG_HPP
 
-#include "utility.hpp"
 #include <chrono>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "utility.hpp"
 
 namespace ormpp {
 

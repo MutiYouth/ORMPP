@@ -119,6 +119,7 @@ windows >vs2017 update5
 
 # REF
 * [xmh0511/xorm](https://github.com/xmh0511/xorm)
+* cmake安装、卸载参考: [yaml-cpp](https://github.com/jbeder/yaml-cpp/blob/master/CMakeLists.txt), [pangolin](https://github.com/stevenlovegrove/Pangolin)
 
 # 联系方式
 ## 当前分支维护

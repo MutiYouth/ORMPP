@@ -1,0 +1,26 @@
+# - Config file for the ORMPP package
+# It defines the following variables
+#  ORMPP_INCLUDE_DIR       - include directory
+#  ORMPP_LIBRARY_DIR       - directory containing libraries
+#  ORMPP_LIBRARIES         - libraries to link against
+
+# Compute paths
+get_filename_component( PROJECT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH )
+
+# Library dependencies (contains definitions for IMPORTED targets)
+if( NOT @PROJECT_NAME@_BINARY_DIR )
+    include( "${PROJECT_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake" )
+endif()
+
+set_and_check( ORMPP_CMAKEMODULES @CMAKE_CURRENT_SOURCE_DIR@/cmake )
+set_and_check( ORMPP_LIBRARIES    @ormpp_components_list@ )
+set_and_check( ORMPP_LIBRARY      "${ORMPP_LIBRARIES}" )
+set( ORMPP_LIBRARY_DIR  "" )
+set( ORMPP_INCLUDE_DIR  "" )
+
+include(CMakeFindDependencyMacro)
+find_dependency(iguana)
+
+#if (UNIX)
+#    find_dependency(Threads)
+#endif()
