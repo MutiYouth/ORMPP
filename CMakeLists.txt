@@ -6,6 +6,12 @@ set(ENABLE_MYSQL ON)
 set(ENABLE_PG ON)
 set(ENABLE_SQLITE3 OFF)
 
+# add iguana env of include
+set(IGUANA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/iguana)
+include_directories(
+        ${IGUANA_DIR}/third_party/frozen/include
+)
+
 set(SOURCE_FILES
         src/core/dbng.hpp
         src/core/type_mapping.hpp
