@@ -4,6 +4,16 @@ project(ORMPP)
 
 ######################################################
 ## settings
+option(BUILD_XORM "Build xorm" OFF)
+option(BUILD_TEST "Build test" OFF)
+
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
+set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE PATH "Installation directory for executables")
+set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE PATH "Installation directory for header files")
+message("mark, CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}\n\n")
+message(STATUS "compiler: " ${CMAKE_CXX_COMPILER_ID})
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++20")  # use c++20, because of iguana used.
 set(ENABLE_MYSQL ON)
 set(ENABLE_PG ON)
@@ -53,17 +63,17 @@ endif ()
 ######################################################
 ## add test
 include_directories(
-    ${CMAKE_SOURCE_DIR}/thirdparty/iguana
+        ${CMAKE_SOURCE_DIR}/thirdparty/iguana
 )
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
 
 # link libraries
 if (ENABLE_MYSQL)
-    if(MSVC)
+    if (MSVC)
         target_link_libraries(${CMAKE_PROJECT_NAME} libmysql)
-    else()
+    else ()
         target_link_libraries(${CMAKE_PROJECT_NAME} mysqlclient)
-    endif()
+    endif ()
 endif ()
 if (ENABLE_SQLITE3)
     target_link_libraries(${CMAKE_PROJECT_NAME} sqlite3)
@@ -82,10 +92,14 @@ list(APPEND ormpp_components_list ${CMAKE_PROJECT_NAME})
 include(cmake_install_abouts)
 
 # add
-add_subdirectory(test)
+if (BUILD_TEST)
+    add_subdirectory(test)
+endif ()
 
 # add examples
 add_subdirectory(src/examples)
 
 # ref
-add_subdirectory(ref/xorm)
+if (BUILD_XORM)
+    add_subdirectory(ref/xorm)
+endif ()

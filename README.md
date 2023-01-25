@@ -78,9 +78,10 @@ git clone https://github.com/MutiYouth/ormpp.git --recursive
 ```bash
 cd path_to_clone_root_dir
 mkdir build && cd build
-cmake ..
+cmake .. -DCMAKE_INSTALL_PREFIX="../../ormpp_install"
 make -j6
-# sudo make install
+make install
+# make uninstall
 ```
 
 ###  使用pg时
@@ -119,7 +120,9 @@ windows >vs2017 update5
 
 # REF
 * [xmh0511/xorm](https://github.com/xmh0511/xorm)
-* cmake安装、卸载参考: [yaml-cpp](https://github.com/jbeder/yaml-cpp/blob/master/CMakeLists.txt), [pangolin](https://github.com/stevenlovegrove/Pangolin)
+* cmake安装、卸载参考: [yaml-cpp](https://github.com/jbeder/yaml-cpp/blob/master/CMakeLists.txt), 
+  [pangolin](https://github.com/stevenlovegrove/Pangolin), 
+  [drogon](https://github.com/drogonframework/drogon)
 
 # 联系方式
 ## 当前分支维护
