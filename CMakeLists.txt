@@ -79,7 +79,7 @@ endif ()
 # install and uninstall 
 set(ormpp_components_list "")
 list(APPEND ormpp_components_list ${CMAKE_PROJECT_NAME})
-include(installs_abouts)
+include(cmake_install_abouts)
 
 # add
 add_subdirectory(test)
