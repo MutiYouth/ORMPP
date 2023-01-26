@@ -72,7 +72,7 @@ More detailed examples，see `src/examples`, or [UserManual](User_Manual.md)。
 # Compile
 Download source code before start operation.
 ```
-git clone https://github.com/MutiYouth/ormpp.git --recursive
+git clone https://github.com/MutiYouth/ORMPP.git --recursive
 ```
 And then:
 ```bash
