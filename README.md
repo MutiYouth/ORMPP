@@ -117,9 +117,8 @@ compilers should support at least C++20.
 6. 增加数据库链接池
 
 
-# 联系方式
-## 当前分支维护
-
+# Contact
+Current Branch:<br/>
 [ORMPP](https://github.com/MutiYouth/ormpp) @ 
 WENG, Start From 22.8.
 
