@@ -107,6 +107,11 @@ compilers should support at least C++20.
 部分用的是[iguana](https://github.com/qicosmos/iguana.git).
 
 
+# todo
+* merge ref/xorm to ormpp
+* pg support big data, eg blob
+
+
 # Roadmap
 
 1. 支持组合键。 
