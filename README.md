@@ -13,7 +13,7 @@ ormpp是modern c++(c++11/14/17)开发的ORM库，目前支持了三种数据库�
 
 你通过ormpp可以很容易地实现数据库的各种操作了，大部情况下甚至都不需要写sql语句。ormpp是基于编译期反射的，会帮你实现自动化的实体映射，你再也不用写对象到数据表相互赋值的繁琐易出错的代码了，更酷的是你可以很方便地切换数据库，如果需要从mysql切换到postgresql或sqlite只需要修改一下数据库类型就可以了，无需修改其他代码。
 
-## Quick started
+## Quick start
 
 这个例子展示如何使用ormpp实现数据库的增删改查之类的操作，无需写sql语句。
 
@@ -122,7 +122,7 @@ Current Branch:<br/>
 [ORMPP](https://github.com/MutiYouth/ormpp) @ 
 WENG, Start From 22.8.
 
-原始作者
+Original Author:
 purecpp@163.com  <br/>
 [https://github.com/qicosmos/ormpp](https://github.com/qicosmos/ormpp "ormpp") <br/>
 
