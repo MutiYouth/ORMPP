@@ -137,13 +137,20 @@ REFLECTION(dummy, id, name);
 #ifdef ORMPP_ENABLE_MYSQL
 TEST_CASE(mysql_exist_tb) {
     dbng<mysql> mysql;
-    TEST_REQUIRE(mysql.connect(ip, db_user_mysql, db_pwd, db_name, /*timeout_seconds=*/5, 3306));
+    TEST_REQUIRE(mysql.connect(ip, db_user_mysql, db_pwd, db_name, 3306, /*timeout_seconds=*/5));
     dummy d{0, "tom"};
     dummy d1{0, "jerry"};
-    mysql.insert(d);
-    mysql.insert(d1);
+    if (mysql.insert(d) < 0) {
+        std::cout << "table `dummy` not exit, create it. create result: ";
+        auto result_c = mysql.create_datatable<dummy>();
+        std::cout << result_c << std::endl;
+    }
+    
+    auto result_1 = mysql.insert(d);
+    auto result_2 = mysql.insert(d1);
     auto v = mysql.query<dummy>("limit 1, 1");
-    std::cout << v.size() << "\n";
+    TEST_CHECK(v.size() > 0);
+    std::cout << "mysql_exist_tb test: " <<  v.size() << "\n";
 }
 
 TEST_CASE(mysql_pool) {
@@ -182,7 +189,7 @@ TEST_CASE(mysql_pool) {
 
 TEST_CASE(test_ormpp_cfg) {
     ormpp_cfg cfg{};
-    bool ret = config_manager::from_file(cfg, "./data/cfg/ormpp.cfg");
+    bool ret = config_manager::from_file(cfg, "../../data/config/ormpp.cfg");
     if (!ret) {
         return;
     }
@@ -200,7 +207,8 @@ TEST_CASE(test_ormpp_cfg) {
 
     auto conn1 = pool.get();
     auto result1 = conn1->query<student>();
-    std::cout << result1.size() << std::endl;
+    TEST_CHECK(result1.size() > 0);
+    std::cout << "cfg file parse test: " << result1.size() << std::endl;
 #endif
 }
 
@@ -324,6 +332,7 @@ TEST_CASE(orm_insert_query) {
     student s2 = {0, "mke", 2, 21, 3.5, "room4"};
     std::vector<student> v{s1, s2};
 
+    // mysql
 #ifdef ORMPP_ENABLE_MYSQL
     dbng<mysql> mysql;
     TEST_REQUIRE(mysql.connect(ip, db_user_mysql, db_pwd, db_name));
@@ -335,12 +344,14 @@ TEST_CASE(orm_insert_query) {
 #endif
 
 
+    // pg
 #ifdef ORMPP_ENABLE_PG
     dbng<postgresql> pg_db;
     TEST_REQUIRE(pg_db.connect(ip, db_user_pg, db_pwd, db_name));
     auto vv1 = pg_db.query(FID(simple::id), "<", "5");
 #endif
 
+    // sqlite
 #ifdef ORMPP_ENABLE_SQLITE3
     dbng<sqlite> sqlite;
     TEST_REQUIRE(sqlite.connect("test.db"));
@@ -351,18 +362,20 @@ TEST_CASE(orm_insert_query) {
     {
 #ifdef ORMPP_ENABLE_PG
         TEST_REQUIRE(pg_db.create_datatable<student>(auto_key, not_null));
-        // WENG bug found 22-10-5 23:44: 这里的insert报错。
-        TEST_CHECK(pg_db.insert(s) == 1);
+        // WENG bug found 22-10-5 23:44: 这里的insert报错。  done, 23-1-26 20:50. 不影响运行。
+        auto result1 = pg_db.insert(s);
+        TEST_CHECK(result1 == 1);
         auto result2 = pg_db.query<student>();
         TEST_CHECK(result2.size() == 1);
-        TEST_CHECK(pg_db.insert(v) == 2);
+        auto result3 = pg_db.insert(v);
+        TEST_CHECK(result3 == 2);
 #endif
 
 #ifdef ORMPP_ENABLE_SQLITE3
         TEST_REQUIRE(sqlite.create_datatable<student>(auto_key));
         TEST_CHECK(sqlite.insert(s) == 1);
-        auto result3 = sqlite.query<student>();
-        TEST_CHECK(result3.size() == 1);
+        auto result4 = sqlite.query<student>();
+        TEST_CHECK(result4.size() == 1);
         TEST_CHECK(sqlite.insert(v) == 2);
         auto result6 = sqlite.query<student>();
         TEST_CHECK(result6.size() == 4);

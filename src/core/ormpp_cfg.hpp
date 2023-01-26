@@ -90,6 +90,7 @@ public:
     inline static bool from_file(T &t, std::string_view file_path) {
         std::ifstream in(file_path.data(), std::ios::binary);
         if (!in.is_open()) {
+            std::cout << "'" << file_path << "' is not a exist" << std::endl;
             return false;
         }
 

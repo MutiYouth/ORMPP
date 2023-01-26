@@ -19,3 +19,6 @@ foreach(file ${files})
         message(STATUS "File $ENV{DESTDIR}${file} does not exist.")
     endif()
 endforeach()
+
+
+# todo: delete parent directory. 23.1.26 0046

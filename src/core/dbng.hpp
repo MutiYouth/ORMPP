@@ -39,9 +39,20 @@ public:
     bool create_datatable(Args &&...args) {
         return db_.template create_datatable<T>(std::forward<Args>(args)...);
     }
+    
     template<typename T>
     bool drop_table() {
         return db_.template drop_table<T>();
+    }
+
+    /**
+    * 是否存在表
+    * @tparam T 
+    * @return 
+    */
+    template<typename T>
+    bool exist_table() {
+        return db_.template exist_table<T>();
     }
 
 
@@ -158,8 +169,7 @@ private:
         // if field type is numeric, return type of val is numeric, to string; val
         // is string, no change; if field type is string, return type of val is
         // numeric, to string and add ''; val is string, add '';
-        using return_type =
-                typename field_attribute<decltype(pair.second)>::return_type;
+        using return_type = typename field_attribute<decltype(pair.second)>::return_type;
 
         if constexpr (std::is_arithmetic_v<return_type> &&
                       std::is_arithmetic_v<V>) {
@@ -208,9 +218,7 @@ private:
         std::declval<Args>()...));                                             \
     bool r = true;                                                             \
     std::tuple<AP...> tp{};                                                    \
-    for_each_l(                                                                \
-        tp,                                                                    \
-        [&r, &args...](auto &item) {                                           \
+    for_each_l( tp, [&r, &args...](auto &item) {                               \
           if (!r)                                                              \
             return;                                                            \
           if constexpr (has_before<decltype(item)>::value)                     \
@@ -223,9 +231,7 @@ private:
       return this->func(std::forward<Args>(args)...);                          \
     };                                                                         \
     result_type result = std::invoke(lambda);                                  \
-    for_each_r(                                                                \
-        tp,                                                                    \
-        [&r, &result, &args...](auto &item) {                                  \
+    for_each_r( tp, [&r, &result, &args...](auto &item) {                      \
           if (!r)                                                              \
             return;                                                            \
           if constexpr (has_after<decltype(item), result_type>::value)         \

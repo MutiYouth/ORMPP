@@ -17,7 +17,7 @@ message(STATUS "compiler: " ${CMAKE_CXX_COMPILER_ID})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++20")  # use c++20, because of iguana used.
 set(ENABLE_MYSQL ON)
 set(ENABLE_PG ON)
-set(ENABLE_SQLITE3 OFF)
+set(ENABLE_SQLITE3 ON)
 
 # Make our own cmake imports accessible
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")

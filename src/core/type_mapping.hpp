@@ -21,13 +21,14 @@
 #include <sqlite3.h>
 #endif
 
+#include <string>
+#include <string_view>
+#include <array>
+
 // postgresql
 #include "../dbs/pg_types.h"
 
 
-#include <string>
-#include <string_view>
-#include <array>
 
 using namespace std::string_view_literals;
 

@@ -1,14 +1,17 @@
 //
 // Created by qiyu on 10/28/17.
 //
-#include "../core/utility.hpp"
 #include <climits>
 #include <sqlite3.h>
 #include <string>
 #include <vector>
 
+#include "../core/utility.hpp"
+
+
 #ifndef ORM_SQLITE_HPP
 #define ORM_SQLITE_HPP
+
 namespace ormpp {
 class sqlite
 {
@@ -74,6 +77,32 @@ public:
         return true;
     }
 
+    template<typename T>
+    bool exist_table() {
+        std::string table_name = std::string(iguana::get_name<T>());
+        auto exist_tb_check = "SELECT count(*) FROM sqlite_master WHERE type=\"table\" AND name =\"" + table_name + "\";";
+        int result = sqlite3_prepare_v2(handle_, exist_tb_check.data(), (int) exist_tb_check.size(),
+                                        &stmt_, nullptr);
+        if (result != SQLITE_OK) {
+            set_last_error(sqlite3_errmsg(handle_));
+            return false;
+        }
+
+        auto guard = guard_statment(stmt_);
+
+        // get data
+        result = sqlite3_step(stmt_);
+        if (result == SQLITE_DONE || result != SQLITE_ROW)
+            return false;
+        
+        // parse
+        std::string query_result_str;
+        query_result_str.reserve(sqlite3_column_bytes(stmt_, 0));
+        query_result_str.assign((const char *) sqlite3_column_text(stmt_, 0), (size_t) sqlite3_column_bytes(stmt_, 0));
+        
+        return std::atoi(query_result_str.c_str()) > 0;
+    }
+
     template<typename T, typename... Args>
     int insert(const T &t, Args &&...args) {
         std::string sql = auto_key_map_.empty()
@@ -109,8 +138,7 @@ public:
     template<typename T, typename... Args>
     bool delete_records(Args &&...where_condiction) {
         auto sql = generate_delete_sql<T>(std::forward<Args>(where_condiction)...);
-        if (sqlite3_exec(handle_, sql.data(), nullptr, nullptr, nullptr) !=
-            SQLITE_OK) {
+        if (sqlite3_exec(handle_, sql.data(), nullptr, nullptr, nullptr) != SQLITE_OK) {
             set_last_error(sqlite3_errmsg(handle_));
             return false;
         }
@@ -190,9 +218,7 @@ public:
 
             T tp = {};
             int index = 0;
-            iguana::for_each(
-                    tp,
-                    [this, &index](auto &item, auto I) {
+            iguana::for_each(tp, [this, &index](auto &item, auto I) {
                         if constexpr (iguana::is_reflection_v<decltype(item)>) {
                             std::remove_reference_t<decltype(item)> t = {};
                             iguana::for_each(t, [this, &index, &t](auto ele, auto i) {
@@ -284,10 +310,7 @@ private:
         for (size_t i = 0; i < arr_size; ++i) {
             auto field_name = arr[i];
             bool has_add_field = false;
-            for_each0(
-                    tp,
-                    [&sql, &i, &has_add_field, field_name, type_name_arr, name,
-                            this](auto item) {
+            for_each0(tp, [&sql, &i, &has_add_field, field_name, type_name_arr, name, this](auto item) {
                         if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
                             if (item.fields.find(field_name.data()) == item.fields.end())
                                 return;
@@ -370,8 +393,7 @@ private:
     template<typename T>
     bool set_param_bind(T &&value, int i) {
         using U = std::remove_const_t<std::remove_reference_t<T>>;
-        if constexpr (std::is_integral_v<U> &&
-                      !iguana::is_int64_v<U>) { // double, int64
+        if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) { // double, int64
             return SQLITE_OK == sqlite3_bind_int(stmt_, i, value);
         }
         else if constexpr (iguana::is_int64_v<U>) {
@@ -381,12 +403,10 @@ private:
             return SQLITE_OK == sqlite3_bind_double(stmt_, i, value);
         }
         else if constexpr (std::is_same_v<std::string, U>) {
-            return SQLITE_OK == sqlite3_bind_text(stmt_, i, value.data(),
-                                                  (int) value.size(), nullptr);
+            return SQLITE_OK == sqlite3_bind_text(stmt_, i, value.data(), (int) value.size(), nullptr);
         }
         else if constexpr (is_char_array_v<U>) {
-            return SQLITE_OK ==
-                   sqlite3_bind_text(stmt_, i, value, sizeof(U), nullptr);
+            return SQLITE_OK == sqlite3_bind_text(stmt_, i, value, sizeof(U), nullptr);
         }
         else {
             std::cout << "this type has not supported yet" << std::endl;
@@ -397,8 +417,7 @@ private:
     template<typename T>
     void assign(T &&value, int i) {
         using U = std::remove_const_t<std::remove_reference_t<T>>;
-        if constexpr (std::is_integral_v<U> &&
-                      !iguana::is_int64_v<U>) { // double, int64
+        if constexpr (std::is_integral_v<U> && !iguana::is_int64_v<U>) { // double, int64
             value = sqlite3_column_int(stmt_, i);
         }
         else if constexpr (iguana::is_int64_v<U>) {
@@ -409,8 +428,7 @@ private:
         }
         else if constexpr (std::is_same_v<std::string, U>) {
             value.reserve(sqlite3_column_bytes(stmt_, i));
-            value.assign((const char *) sqlite3_column_text(stmt_, i),
-                         (size_t) sqlite3_column_bytes(stmt_, i));
+            value.assign((const char *) sqlite3_column_text(stmt_, i), (size_t) sqlite3_column_bytes(stmt_, i));
         }
         else if constexpr (is_char_array_v<U>) {
             memcpy(value, sqlite3_column_text(stmt_, i), sizeof(U));
@@ -421,8 +439,7 @@ private:
     }
 
     template<typename T, typename... Args>
-    int insert_impl(bool is_update, const std::string &sql, const T &t,
-                    Args &&...args) {
+    int insert_impl(bool is_update, const std::string &sql, const T &t, Args &&...args) {
         int result = sqlite3_prepare_v2(handle_, sql.data(), (int) sql.size(),
                                         &stmt_, nullptr);
         if (result != SQLITE_OK) {
@@ -432,13 +449,12 @@ private:
 
         auto guard = guard_statment(stmt_);
 
+        // prepare parameters
         auto it = auto_key_map_.find(get_name<T>());
-        std::string auto_key =
-                (is_update || it == auto_key_map_.end()) ? "" : it->second;
+        std::string auto_key = (is_update || it == auto_key_map_.end()) ? "" : it->second;
         bool bind_ok = true;
         int index = 0;
-        iguana::for_each(
-                t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
+        iguana::for_each( t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
                     if (!bind_ok)
                         return;
 
@@ -484,19 +500,16 @@ private:
         }
 
         auto it = auto_key_map_.find(get_name<T>());
-        std::string auto_key =
-                (is_update || it == auto_key_map_.end()) ? "" : it->second;
+        std::string auto_key = (is_update || it == auto_key_map_.end()) ? "" : it->second;
 
         for (auto &t: v) {
             bool bind_ok = true;
             int index = 0;
-            iguana::for_each(
-                    t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
+            iguana::for_each(t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
                         if (!bind_ok)
                             return;
 
-                        if (!auto_key.empty() &&
-                            auto_key == iguana::get_name<T>(decltype(i)::value).data()) {
+                        if (!auto_key.empty() && auto_key == iguana::get_name<T>(decltype(i)::value).data()) {
                             return;
                         }
 

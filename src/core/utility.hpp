@@ -31,8 +31,7 @@ struct result_size;
 template<template<class...> class List, class... T>
 struct result_size<List<T...>>
 {
-    constexpr static const size_t value =
-            value_of<T...>::value; // (iguana::get_value<T>() + ...);
+    constexpr static const size_t value = value_of<T...>::value; // (iguana::get_value<T>() + ...);
 };
 
 template<typename T>
@@ -84,8 +83,7 @@ inline constexpr auto get_type_names(DBType type) {
     std::array<std::string, SIZE> arr = {};
     iguana::for_each(T{}, [&](auto &item, auto i) {
         constexpr auto Idx = decltype(i)::value;
-        using U =
-                std::remove_reference_t<decltype(iguana::get<Idx>(std::declval<T>()))>;
+        using U = std::remove_reference_t<decltype(iguana::get<Idx>(std::declval<T>()))>;
         std::string s;
         if (type == DBType::unknown) {}
 #ifdef ORMPP_ENABLE_MYSQL
@@ -146,8 +144,7 @@ inline std::string generate_insert_sql(bool replace) {
 }
 
 template<typename T>
-inline std::string
-generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_, bool replace) {
+inline std::string generate_auto_insert_sql(std::map<std::string, std::string> &auto_key_map_, bool replace) {
     std::string sql = replace ? "replace into " : "insert into ";
     constexpr auto SIZE = iguana::get_value<T>();
     auto name = get_name<T>();
@@ -182,8 +179,7 @@ inline bool is_empty(const std::string &t) {
 }
 
 template<class T>
-constexpr bool is_char_array_v = std::is_array_v<T>
-                                 && std::is_same_v<char, std::remove_pointer_t<std::decay_t<T>>>;
+constexpr bool is_char_array_v = std::is_array_v<T> && std::is_same_v<char, std::remove_pointer_t<std::decay_t<T>>>;
 
 template<size_t N>
 inline constexpr size_t char_array_size(char (&)[N]) {
@@ -292,8 +288,8 @@ constexpr std::string_view get_field_name(std::string_view full_name) {
 
 #define FID(field)                                                             \
   std::pair<std::string_view, decltype(&field)>(                               \
-      ormpp::get_field_name<decltype(&field)>(std::string_view(#field)),       \
-      &field)
+      ormpp::get_field_name<decltype(&field)>(std::string_view(#field)), &field)
+      
 #define SID(field)                                                             \
   get_field_name<decltype(&field)>(std::string_view(#field)).data()
 } // namespace ormpp

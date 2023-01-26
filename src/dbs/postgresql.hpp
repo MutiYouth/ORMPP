@@ -12,17 +12,11 @@
 #ifdef _MSC_VER
 #include <include/libpq-fe.h>
 #else
-
 #include <postgresql/libpq-fe.h>
 #include <climits>
-#include "iguana/reflection.hpp"
-#include "../core/entity.hpp"
-#include "../core/utility.hpp"
-#include "db_common.hpp"
-
 #endif
 
-
+#include "../core/utility.hpp"
 
 
 using namespace std::string_literals;
@@ -90,7 +84,7 @@ public:
 
     template<typename T>
     bool drop_table() {
-        auto drop_tb = "DROP TABLE IF EXISTS " + iguana::get_name<T>() + " cascade; ";
+        auto drop_tb = "DROP TABLE IF EXISTS " + std::string(iguana::get_name<T>()) + " cascade; ";
         res_ = PQexec(con_, drop_tb.data());
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
             PQclear(res_);
@@ -99,6 +93,45 @@ public:
         PQclear(res_);
 
         return true;
+    }
+    
+    /**
+    * REF
+    * https://blog.51cto.com/odevincent/1196266
+    * https://oomake.com/question/2750951
+    * @tparam T 
+    * @return 
+    */
+    template<typename T>
+    bool exist_table() {
+        auto exist_tb_check = "select count(*) from pg_class where relname = '" + std::string(iguana::get_name<T>()) + "';";
+        res_ = PQexec(con_, exist_tb_check.data());
+
+        // WENG todo_ 23-1-26: 从返回的结果中，获取结果.   done, 23-1-26 21:32. 
+        if (PQresultStatus(res_) != PGRES_TUPLES_OK) {
+            std::cout << "\nPQ result Status:" << PQresultStatus(res_) << std::endl;
+            std::cout << PQresultErrorMessage(res_) << std::endl;
+            PQclear(res_);
+            return false;
+        }
+        /*
+        std::cout << "rows count : " << PQntuples(res_) << std::endl;
+        std::cout << "fields count : " << PQnfields(res_) << std::endl;
+        
+        std::cout << "field " << 0 << " name is : " << PQfname(res_,0) << std::endl;
+        std::cout << "field " << 0 << " format is : " << PQfformat(res_,0) << std::endl;
+        std::cout << "field " << 0 << " mod is : " << PQfmod(res_,0) << std::endl;
+        std::cout << "field " << 0 << " size is (varchar will return -1.): " << PQfsize(res_,0) << std::endl;
+        std::cout << "field " << 0 << " type: " << PQftype(res_,0) << std::endl;
+
+        std::cout << "field_name_no_exist column index: " << PQfnumber(res_, "field_name_no_exist") << std::endl;
+        std::cout << "count : " << PQgetvalue(res_, 0, PQfnumber(res_, "count")) << std::endl;
+        */
+        int result_num = atoi(PQgetvalue(res_, 0, PQfnumber(res_, "count")));
+
+        PQclear(res_);
+
+        return result_num == 1;
     }
 
 

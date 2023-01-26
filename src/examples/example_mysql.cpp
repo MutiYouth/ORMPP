@@ -26,6 +26,7 @@ int main() {
     dbng<mysql> mysql_db;
     // ormpp_key key{"id"};
     mysql_db.connect("192.168.0.106", "root", "weng2022", "test");
+    std::cout << "table exist: " << mysql_db.exist_table<person>() << std::endl;
     mysql_db.drop_table<person>();
     mysql_db.create_datatable<person>();
 

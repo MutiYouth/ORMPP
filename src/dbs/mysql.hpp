@@ -5,14 +5,14 @@
 #ifndef ORM_MYSQL_HPP
 #define ORM_MYSQL_HPP
 
-#include "../core/entity.hpp"
-#include "../core/type_mapping.hpp"
-#include "../core/utility.hpp"
 #include <climits>
 #include <list>
 #include <map>
 #include <string_view>
 #include <utility>
+
+#include "../core/utility.hpp"
+
 
 namespace ormpp {
 
@@ -36,6 +36,7 @@ public:
         }
 
         int timeout = -1;
+        // std::cout << "para nums: " << sizeof...(Args) << std::endl;
         auto tp = get_tp(timeout, std::forward<Args>(args)...);
 
         if (timeout > 0) {
@@ -103,8 +104,37 @@ public:
         return true;
     }
 
-
-
+    /**
+    * 
+    * REF
+    * https://blog.csdn.net/weter_drop/article/details/93189463
+    * https://cloud.tencent.com/developer/article/1732956
+    * @tparam T 
+    * @return 
+    */
+    template<typename T>
+    bool exist_table() {
+        // SHOW TABLES LIKE "%erso%"
+        // select TABLE_NAME from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA="test" and TABLE_NAME="person" ;
+        // auto exist_tb_check = "SHOW TABLES LIKE \"" + std::string(iguana::get_name<T>()) + "\";";
+        std::string exist_tb_check = "SHOW TABLES LIKE \"%e%\";";
+        if (mysql_query(con_, exist_tb_check.data())) {
+            fprintf(stderr, "%s\n", mysql_error(con_));
+            return false;
+        }
+        MYSQL_RES *result = mysql_store_result(con_);
+        auto affects_rows =  mysql_affected_rows(con_);
+        auto rtn_row = mysql_fetch_row(result); // 获取一行的信息
+        auto rtn_num_rows = mysql_num_rows(result);
+        auto rtn_num_cols = mysql_num_fields(result);
+        
+        mysql_free_result(result);
+        bool final_rst = rtn_num_rows > 1 && rtn_num_cols >= 1 && ! std::string(rtn_row[0]).empty();
+        
+        return final_rst;
+    }
+    
+    
     template<typename T, typename... Args>
     constexpr int insert(const std::vector<T> &t, Args &&...args) {
         auto name = get_name<T>();
@@ -124,8 +154,7 @@ public:
         return insert_impl(sql, t, std::forward<Args>(args)...);
     }
 
-
-
+    
     // WENG bug found 22-10-5 15:18: 更新异常！
     template<typename T, typename... Args>
     constexpr int update(const std::vector<T> &t, Args &&...condiction_fields_args) {
@@ -140,8 +169,7 @@ public:
         return insert_impl(sql, t, std::forward<Args>(condiction_fields_args)...);
     }
 
-
-
+    
     template<typename T, typename... Args>
     constexpr bool delete_records(Args &&...where_condiction) {
         auto sql = generate_delete_sql<T>(std::forward<Args>(where_condiction)...);
@@ -157,8 +185,7 @@ public:
         return (int) mysql_affected_rows(con_);
     }
 
-
-
+    
     // for tuple and string with args...
     template<typename T, typename Arg, typename... Args>
     std::enable_if_t<!iguana::is_reflection_v<T>, std::vector<T>>
@@ -198,13 +225,10 @@ public:
         T tp{};
 
         size_t index = 0;
-        iguana::for_each(
-                tp,
-                [&param_binds, &mp, &index](auto &item, auto I) {
+        iguana::for_each(tp, [&param_binds, &mp, &index](auto &item, auto I) {
                     using U = std::remove_reference_t<decltype(item)>;
                     if constexpr (std::is_arithmetic_v<U>) {
-                        param_binds[index].buffer_type =
-                                (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
+                        param_binds[index].buffer_type = (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
                         param_binds[index].buffer = &item;
                         index++;
                     }
@@ -219,11 +243,9 @@ public:
                     else if constexpr (iguana::is_reflection_v<U>) {
                         iguana::for_each(item, [&param_binds, &mp, &item, &index](auto &ele,
                                                                                   auto i) {
-                            using U =
-                                    std::remove_reference_t<decltype(std::declval<U>().*ele)>;
+                            using U = std::remove_reference_t<decltype(std::declval<U>().*ele)>;
                             if constexpr (std::is_arithmetic_v<U>) {
-                                param_binds[index].buffer_type =
-                                        (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
+                                param_binds[index].buffer_type = (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
                                 param_binds[index].buffer = &(item.*ele);
                             }
                             else if constexpr (std::is_same_v<std::string, U>) {
@@ -330,8 +352,7 @@ public:
             constexpr auto Idx = decltype(i)::value;
             using U = std::remove_reference_t<decltype(std::declval<T>().*item)>;
             if constexpr (std::is_arithmetic_v<U>) {
-                param_binds[Idx].buffer_type =
-                        (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
+                param_binds[Idx].buffer_type = (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
                 param_binds[Idx].buffer = &(t.*item);
                 index++;
             }
