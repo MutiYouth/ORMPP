@@ -112,14 +112,8 @@ compilers should support at least C++20.
 * pg support big data, eg blob
 
 
-# Roadmap
-
-1. 支持组合键。 
-2. 多表查询时增加一些诸如where, group, oder by, join, limit等常用的谓词，避免直接写sql语句。 
-3. 增加日志 
-4. 增加获取错误消息的接口 
-5. 支持更多的数据库、数据类型
-6. 增加数据库链接池
+# license
+Original parts is Apache License, others parts is MIT.
 
 
 # Contact
