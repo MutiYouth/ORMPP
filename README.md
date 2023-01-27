@@ -66,7 +66,7 @@ int main()
 }
 ```
 
-More detailed examples，see `src/examples`, or [UserManual](User_Manual.md)。
+More detailed examples，see `src/examples`, or [UserManual](doc/User_Manual.md)。
 
 
 # Compile
