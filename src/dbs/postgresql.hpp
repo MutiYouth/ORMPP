@@ -12,8 +12,10 @@
 #ifdef _MSC_VER
 #include <include/libpq-fe.h>
 #else
+
 #include <postgresql/libpq-fe.h>
 #include <climits>
+
 #endif
 
 #include "../core/utility.hpp"
@@ -94,7 +96,7 @@ public:
 
         return true;
     }
-    
+
     /**
     * REF
     * https://blog.51cto.com/odevincent/1196266
@@ -336,7 +338,7 @@ public:
         res_ = PQexec(con_, sql.data());
         auto guard = guard_result(res_);
         if (PQresultStatus(res_) != PGRES_COMMAND_OK) {
-            
+
             return false;
         }
 
@@ -404,6 +406,7 @@ private:
         int status_ = 0;
         bool dismiss_ = false;
     };
+
 
     template<typename T>
     auto to_str(T &&t) {
@@ -485,7 +488,7 @@ private:
         if constexpr (SIZE > 0) {
             // using U = std::tuple<std::decay_t <Args>...>; //the code can't compile
             // in vs2017, why?maybe args... in if constexpr?
-            static_assert(!(iguana::has_type<ormpp_key, U>::value &&  iguana::has_type<ormpp_auto_key, U>::value), "should only one key");
+            static_assert(!(iguana::has_type<ormpp_key, U>::value && iguana::has_type<ormpp_auto_key, U>::value), "should only one key");
         }
 
         // at first sort the args, make sure the key always in the head
@@ -559,7 +562,7 @@ private:
     }
 
 
-    #pragma region INSERT_ABOUT
+#pragma region INSERT_ABOUT
 
     template<typename T>
     bool prepare(const std::string &sql) {
@@ -699,9 +702,9 @@ private:
         return sql;
     }
 
-    #pragma endregion INSERT_ABOUT
+#pragma endregion INSERT_ABOUT
 
-    #pragma region GET_CONDICTION
+#pragma region GET_CONDICTION
 
     template<typename T, typename... Args>
     std::string get_condition(const T &t, const std::string &key, Args &&...condiction_fields_args) {
@@ -755,7 +758,7 @@ private:
         }
     }
 
-    #pragma endregion GET_CONDICTION
+#pragma endregion GET_CONDICTION
 
 
 private:

@@ -87,14 +87,14 @@ inline constexpr auto get_type_names(DBType type) {
         std::string s;
         if (type == DBType::unknown) {}
 #ifdef ORMPP_ENABLE_MYSQL
-            else if(type==DBType::mysql) {
-              s = ormpp_mysql::type_to_name(identity<U>{});
-            }
+        else if (type == DBType::mysql) {
+            s = ormpp_mysql::type_to_name(identity<U>{});
+        }
 #endif
 #ifdef ORMPP_ENABLE_SQLITE3
-            else if(type==DBType::sqlite) {
-              s = ormpp_sqlite::type_to_name(identity<U>{});
-            }
+        else if (type == DBType::sqlite) {
+            s = ormpp_sqlite::type_to_name(identity<U>{});
+        }
 #endif
 #ifdef ORMPP_ENABLE_PG
         else if (type == DBType::postgresql) {
@@ -214,7 +214,7 @@ inline void get_sql_conditions(std::string &) {
 }
 
 template<typename... Args>
-inline void get_sql_conditions(std::string &sql, const std::string &arg,  Args &&...args) {
+inline void get_sql_conditions(std::string &sql, const std::string &arg, Args &&...args) {
     if (arg.find("select") != std::string::npos) {
         sql = arg;
     }
@@ -289,7 +289,7 @@ constexpr std::string_view get_field_name(std::string_view full_name) {
 #define FID(field)                                                             \
   std::pair<std::string_view, decltype(&field)>(                               \
       ormpp::get_field_name<decltype(&field)>(std::string_view(#field)), &field)
-      
+
 #define SID(field)                                                             \
   get_field_name<decltype(&field)>(std::string_view(#field)).data()
 } // namespace ormpp

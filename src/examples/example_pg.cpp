@@ -57,6 +57,6 @@ int main() {
         }
     }
     pg_db.commit();
-    
+
     std::cout << "Done!" << std::endl;
 }

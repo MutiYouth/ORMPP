@@ -10,7 +10,9 @@
 
 #else
 #ifdef ORMPP_ENABLE_MYSQL
+
 #include <mysql/mysql.h>
+
 #endif
 
 #endif
@@ -18,12 +20,15 @@
 
 // sqlite3
 #ifdef ORMPP_ENABLE_SQLITE3
+
 #include <sqlite3.h>
+
 #endif
 
 #include <string>
 #include <string_view>
 #include <array>
+#include <vector>
 
 // postgresql
 #include "../dbs/pg_types.h"
@@ -53,43 +58,58 @@ struct identity
 #ifdef ORMPP_ENABLE_MYSQL
 namespace ormpp_mysql {
 REGISTER_TYPE(char, MYSQL_TYPE_TINY)
+
 REGISTER_TYPE(short, MYSQL_TYPE_SHORT)
+
 REGISTER_TYPE(int, MYSQL_TYPE_LONG)
+
 REGISTER_TYPE(float, MYSQL_TYPE_FLOAT)
+
 REGISTER_TYPE(double, MYSQL_TYPE_DOUBLE)
+
 REGISTER_TYPE(int64_t, MYSQL_TYPE_LONGLONG)
 
 inline int type_to_id(identity<std::string>) noexcept {
-  return MYSQL_TYPE_VAR_STRING;
+    return MYSQL_TYPE_VAR_STRING;
 }
+
 inline std::string id_to_type(
-    std::integral_constant<std::size_t, MYSQL_TYPE_VAR_STRING>) noexcept {
-  std::string res{};
-  return res;
+        std::integral_constant<std::size_t, MYSQL_TYPE_VAR_STRING>) noexcept {
+    std::string res{};
+    return res;
 }
 
 inline constexpr auto type_to_name(identity<char>) noexcept {
-  return "TINYINT"sv;
+    return "TINYINT"sv;
 }
+
 inline constexpr auto type_to_name(identity<short>) noexcept {
-  return "SMALLINT"sv;
+    return "SMALLINT"sv;
 }
+
 inline constexpr auto type_to_name(identity<int>) noexcept {
-  return "INTEGER"sv;
+    return "INTEGER"sv;
 }
+
 inline constexpr auto type_to_name(identity<float>) noexcept {
-  return "FLOAT"sv;
+    return "FLOAT"sv;
 }
+
 inline constexpr auto type_to_name(identity<double>) noexcept {
-  return "DOUBLE"sv;
+    return "DOUBLE"sv;
 }
+
 inline constexpr auto type_to_name(identity<int64_t>) noexcept {
-  return "BIGINT"sv;
+    return "BIGINT"sv;
 }
-inline auto type_to_name(identity<std::string>) noexcept { return "TEXT"sv; }
-template <size_t N>
+
+inline auto type_to_name(identity<std::string>) noexcept {
+    return "TEXT"sv;
+}
+
+template<size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
-  return "varchar(" + std::to_string(N) + ")";
+    return "varchar(" + std::to_string(N) + ")";
 }
 } // namespace ormpp_mysql
 #endif
@@ -98,41 +118,55 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
 #ifdef ORMPP_ENABLE_SQLITE3
 namespace ormpp_sqlite {
 REGISTER_TYPE(int, SQLITE_INTEGER)
+
 REGISTER_TYPE(double, SQLITE_FLOAT)
 
-inline int type_to_id(identity<std::string>) noexcept { return SQLITE_TEXT; }
+inline int type_to_id(identity<std::string>) noexcept {
+    return SQLITE_TEXT;
+}
+
 inline std::string
 id_to_type(std::integral_constant<std::size_t, SQLITE_TEXT>) noexcept {
-  std::string res{};
-  return res;
+    std::string res{};
+    return res;
 }
 
 inline constexpr auto type_to_name(identity<bool>) noexcept {
-  return "INTEGER"sv;
+    return "INTEGER"sv;
 }
+
 inline constexpr auto type_to_name(identity<char>) noexcept {
-  return "INTEGER"sv;
+    return "INTEGER"sv;
 }
+
 inline constexpr auto type_to_name(identity<short>) noexcept {
-  return "INTEGER"sv;
+    return "INTEGER"sv;
 }
+
 inline constexpr auto type_to_name(identity<int>) noexcept {
-  return "INTEGER"sv;
+    return "INTEGER"sv;
 }
+
 inline constexpr auto type_to_name(identity<float>) noexcept {
-  return "FLOAT"sv;
+    return "FLOAT"sv;
 }
+
 inline constexpr auto type_to_name(identity<double>) noexcept {
-  return "DOUBLE"sv;
+    return "DOUBLE"sv;
 }
+
 inline constexpr auto type_to_name(identity<int64_t>) noexcept {
-  return "INTEGER"sv;
+    return "INTEGER"sv;
 }
-inline auto type_to_name(identity<std::string>) noexcept { return "TEXT"sv; }
-template <size_t N>
+
+inline auto type_to_name(identity<std::string>) noexcept {
+    return "TEXT"sv;
+}
+
+template<size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
-  std::string s = "varchar(" + std::to_string(N) + ")";
-  return s;
+    std::string s = "varchar(" + std::to_string(N) + ")";
+    return s;
 }
 } // namespace ormpp_sqlite
 #endif

@@ -24,7 +24,9 @@
 
 #endif
 #ifdef ORMPP_ENABLE_SQLITE3
+
 #include "../src/dbs/sqlite.hpp"
+
 #endif
 #ifdef ORMPP_ENABLE_PG
 
@@ -145,12 +147,12 @@ TEST_CASE(mysql_exist_tb) {
         auto result_c = mysql.create_datatable<dummy>();
         std::cout << result_c << std::endl;
     }
-    
+
     auto result_1 = mysql.insert(d);
     auto result_2 = mysql.insert(d1);
     auto v = mysql.query<dummy>("limit 1, 1");
     TEST_CHECK(v.size() > 0);
-    std::cout << "mysql_exist_tb test: " <<  v.size() << "\n";
+    std::cout << "mysql_exist_tb test: " << v.size() << "\n";
 }
 
 TEST_CASE(mysql_pool) {
@@ -662,7 +664,7 @@ TEST_CASE(orm_query_some) {
     TEST_CHECK(sqlite.insert(v) == 3);
     TEST_REQUIRE(sqlite.create_datatable<student>(key));
     auto result2 = sqlite.query<std::tuple<int, std::string, double>>(
-        "select code, name, dm from student");
+            "select code, name, dm from student");
     TEST_CHECK(result2.size() == 3);
 #endif
 }
@@ -721,10 +723,10 @@ TEST_CASE(orm_query_multi_table) {
     TEST_CHECK(sqlite.insert(v) == 3);
     TEST_REQUIRE(sqlite.create_datatable<person>(key1));
     auto result2 = sqlite.query<std::tuple<int, std::string, double>>(
-        "select person.*, student.name, student.age from person, student"s);
+            "select person.*, student.name, student.age from person, student"s);
     TEST_CHECK(result2.size() == 9);
     auto result5 = sqlite.query<std::tuple<person, student>>(
-        "select * from person, student"s);
+            "select * from person, student"s);
     TEST_CHECK(result2.size() == 9);
 #endif
 }
@@ -780,11 +782,11 @@ TEST_CASE(orm_transaction) {
     TEST_REQUIRE(sqlite.create_datatable<student>(key));
     TEST_REQUIRE(sqlite.begin());
     for (int i = 0; i < 10; ++i) {
-      student st = {i, "tom", 0, 19, 1.5, "room2"};
-      if (!sqlite.insert(st)) {
-        sqlite.rollback();
-        return;
-      }
+        student st = {i, "tom", 0, 19, 1.5, "room2"};
+        if (!sqlite.insert(st)) {
+            sqlite.rollback();
+            return;
+        }
     }
     TEST_REQUIRE(sqlite.commit());
     auto result2 = sqlite.query<student>();

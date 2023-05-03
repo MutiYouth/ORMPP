@@ -94,12 +94,12 @@ public:
         result = sqlite3_step(stmt_);
         if (result == SQLITE_DONE || result != SQLITE_ROW)
             return false;
-        
+
         // parse
         std::string query_result_str;
         query_result_str.reserve(sqlite3_column_bytes(stmt_, 0));
         query_result_str.assign((const char *) sqlite3_column_text(stmt_, 0), (size_t) sqlite3_column_bytes(stmt_, 0));
-        
+
         return std::atoi(query_result_str.c_str()) > 0;
     }
 
@@ -219,18 +219,18 @@ public:
             T tp = {};
             int index = 0;
             iguana::for_each(tp, [this, &index](auto &item, auto I) {
-                        if constexpr (iguana::is_reflection_v<decltype(item)>) {
-                            std::remove_reference_t<decltype(item)> t = {};
-                            iguana::for_each(t, [this, &index, &t](auto ele, auto i) {
-                                assign(t.*ele, index++);
-                            });
-                            item = std::move(t);
-                        }
-                        else {
-                            assign(item, index++);
-                        }
-                    },
-                    std::make_index_sequence<SIZE>{});
+                                 if constexpr (iguana::is_reflection_v<decltype(item)>) {
+                                     std::remove_reference_t<decltype(item)> t = {};
+                                     iguana::for_each(t, [this, &index, &t](auto ele, auto i) {
+                                         assign(t.*ele, index++);
+                                     });
+                                     item = std::move(t);
+                                 }
+                                 else {
+                                     assign(item, index++);
+                                 }
+                             },
+                             std::make_index_sequence<SIZE>{});
 
             if (index > 0)
                 v.push_back(std::move(tp));
@@ -311,52 +311,52 @@ private:
             auto field_name = arr[i];
             bool has_add_field = false;
             for_each0(tp, [&sql, &i, &has_add_field, field_name, type_name_arr, name, this](auto item) {
-                        if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
-                            if (item.fields.find(field_name.data()) == item.fields.end())
-                                return;
-                        }
-                        else {
-                            if (item.fields != field_name.data())
-                                return;
-                        }
+                          if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
+                              if (item.fields.find(field_name.data()) == item.fields.end())
+                                  return;
+                          }
+                          else {
+                              if (item.fields != field_name.data())
+                                  return;
+                          }
 
-                        if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
-                            if (!has_add_field) {
-                                append(sql, field_name.data(), " ", type_name_arr[i]);
-                            }
-                            append(sql, " NOT NULL");
-                            has_add_field = true;
-                        }
-                        else if constexpr (std::is_same_v<decltype(item), ormpp_key>) {
-                            if (!has_add_field) {
-                                append(sql, field_name.data(), " ", type_name_arr[i]);
-                            }
+                          if constexpr (std::is_same_v<decltype(item), ormpp_not_null>) {
+                              if (!has_add_field) {
+                                  append(sql, field_name.data(), " ", type_name_arr[i]);
+                              }
+                              append(sql, " NOT NULL");
+                              has_add_field = true;
+                          }
+                          else if constexpr (std::is_same_v<decltype(item), ormpp_key>) {
+                              if (!has_add_field) {
+                                  append(sql, field_name.data(), " ", type_name_arr[i]);
+                              }
 
-                            append(sql, " PRIMARY KEY ");
-                            has_add_field = true;
-                        }
-                        else if constexpr (std::is_same_v<decltype(item),
-                                ormpp_auto_key>) {
-                            if (!has_add_field) {
-                                append(sql, field_name.data(), " ", type_name_arr[i]);
-                            }
-                            append(sql, " PRIMARY KEY AUTOINCREMENT");
-                            auto_key_map_[name.data()] = item.fields;
-                            has_add_field = true;
-                        }
-                        else if constexpr (std::is_same_v<decltype(item), ormpp_unique>) {
-                            if (!has_add_field) {
-                                append(sql, field_name.data(), " ", type_name_arr[i]);
-                            }
+                              append(sql, " PRIMARY KEY ");
+                              has_add_field = true;
+                          }
+                          else if constexpr (std::is_same_v<decltype(item),
+                                  ormpp_auto_key>) {
+                              if (!has_add_field) {
+                                  append(sql, field_name.data(), " ", type_name_arr[i]);
+                              }
+                              append(sql, " PRIMARY KEY AUTOINCREMENT");
+                              auto_key_map_[name.data()] = item.fields;
+                              has_add_field = true;
+                          }
+                          else if constexpr (std::is_same_v<decltype(item), ormpp_unique>) {
+                              if (!has_add_field) {
+                                  append(sql, field_name.data(), " ", type_name_arr[i]);
+                              }
 
-                            append(sql, ", UNIQUE(", item.fields, ")");
-                            has_add_field = true;
-                        }
-                        else {
-                            append(sql, field_name.data(), " ", type_name_arr[i]);
-                        }
-                    },
-                    std::make_index_sequence<SIZE>{});
+                              append(sql, ", UNIQUE(", item.fields, ")");
+                              has_add_field = true;
+                          }
+                          else {
+                              append(sql, field_name.data(), " ", type_name_arr[i]);
+                          }
+                      },
+                      std::make_index_sequence<SIZE>{});
 
             if (!has_add_field) {
                 append(sql, field_name.data(), " ", type_name_arr[i]);
@@ -454,18 +454,18 @@ private:
         std::string auto_key = (is_update || it == auto_key_map_.end()) ? "" : it->second;
         bool bind_ok = true;
         int index = 0;
-        iguana::for_each( t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
-                    if (!bind_ok)
-                        return;
+        iguana::for_each(t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
+            if (!bind_ok)
+                return;
 
-                    if (!auto_key.empty() &&
-                        auto_key == iguana::get_name<T>(decltype(i)::value).data()) {
-                        return;
-                    }
+            if (!auto_key.empty() &&
+                auto_key == iguana::get_name<T>(decltype(i)::value).data()) {
+                return;
+            }
 
-                    bind_ok = set_param_bind(t.*item, index + 1);
-                    index++;
-                });
+            bind_ok = set_param_bind(t.*item, index + 1);
+            index++;
+        });
 
         if (!bind_ok) {
             set_last_error(sqlite3_errmsg(handle_));
@@ -506,16 +506,16 @@ private:
             bool bind_ok = true;
             int index = 0;
             iguana::for_each(t, [&t, &bind_ok, &auto_key, &index, this](auto item, auto i) {
-                        if (!bind_ok)
-                            return;
+                if (!bind_ok)
+                    return;
 
-                        if (!auto_key.empty() && auto_key == iguana::get_name<T>(decltype(i)::value).data()) {
-                            return;
-                        }
+                if (!auto_key.empty() && auto_key == iguana::get_name<T>(decltype(i)::value).data()) {
+                    return;
+                }
 
-                        bind_ok = set_param_bind(t.*item, index + 1);
-                        index++;
-                    });
+                bind_ok = set_param_bind(t.*item, index + 1);
+                index++;
+            });
 
             if (!bind_ok) {
                 rollback();

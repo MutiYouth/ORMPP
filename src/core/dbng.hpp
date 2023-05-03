@@ -39,7 +39,7 @@ public:
     bool create_datatable(Args &&...args) {
         return db_.template create_datatable<T>(std::forward<Args>(args)...);
     }
-    
+
     template<typename T>
     bool drop_table() {
         return db_.template drop_table<T>();

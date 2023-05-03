@@ -26,7 +26,7 @@ int main() {
     dbng<sqlite> sqlite_db;
     sqlite_db.connect("./../../../data/db/test_230126.db");
     // ormpp_key key{"id"};
-    
+
     std::cout << "table exist: " << sqlite_db.exist_table<person>() << std::endl;
     sqlite_db.create_datatable<person>();
 
