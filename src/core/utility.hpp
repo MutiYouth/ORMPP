@@ -250,9 +250,12 @@ template<typename T, typename... Args>
 inline std::string generate_query_sql(Args &&...args) {
     constexpr size_t param_size = sizeof...(Args);
     static_assert(param_size == 0 || param_size > 0);
-    std::string sql = "select * from ";
+
+    std::string sql = "select ";
+    auto fields = iguana::get_fields<T>();
     auto name = get_name<T>();
-    append(sql, name.data());
+    append(sql, fields.data(), "from", name.data());
+
 
     std::string where_sql = "";
     if (param_size > 0) {
