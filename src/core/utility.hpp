@@ -126,12 +126,31 @@ inline std::string get_name() {
     return quota_name;
 }
 
+/*template<typename T, typename = std::enable_if_t<iguana::is_reflection_v<T>>>
+inline std::string get_fields() {
+
+    std::string str_fields;
+    static auto arr = iguana::Reflect_members<T>::arr();
+    for (int i = 0; i < arr.size(); ++i) {
+        if (i) {
+            str_fields += ",";
+        }
+        str_fields += arr[i];
+    }
+
+    return str_fields;
+}*/
+
+
 template<typename T>
 inline std::string generate_insert_sql(bool replace) {
     std::string sql = replace ? "replace into " : "insert into ";
     constexpr size_t SIZE = iguana::get_value<T>();
     auto name = get_name<T>();
-    append(sql, name.data(), " values(");
+    // append(sql, name.data(), " values(");
+    auto fileds = iguana::get_fields<T>();
+    append(sql, name.data(), "(", fileds.data(), ")", "values(");
+
     for (size_t i = 0; i < SIZE; ++i) {
         sql += "?";
         if (i < SIZE - 1)

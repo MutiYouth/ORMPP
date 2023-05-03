@@ -56,7 +56,9 @@ struct identity
 
 
 #ifdef ORMPP_ENABLE_MYSQL
+
 namespace ormpp_mysql {
+
 REGISTER_TYPE(char, MYSQL_TYPE_TINY)
 
 REGISTER_TYPE(short, MYSQL_TYPE_SHORT)
@@ -68,6 +70,10 @@ REGISTER_TYPE(float, MYSQL_TYPE_FLOAT)
 REGISTER_TYPE(double, MYSQL_TYPE_DOUBLE)
 
 REGISTER_TYPE(int64_t, MYSQL_TYPE_LONGLONG)
+
+using blob = std::vector<char>;
+
+
 
 inline int type_to_id(identity<std::string>) noexcept {
     return MYSQL_TYPE_VAR_STRING;
@@ -103,6 +109,10 @@ inline constexpr auto type_to_name(identity<int64_t>) noexcept {
     return "BIGINT"sv;
 }
 
+inline constexpr auto type_to_name(identity<blob>) noexcept {
+    return "BLOB"sv;
+}
+
 inline auto type_to_name(identity<std::string>) noexcept {
     return "TEXT"sv;
 }
@@ -112,10 +122,12 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
     return "varchar(" + std::to_string(N) + ")";
 }
 } // namespace ormpp_mysql
+
 #endif
 
 
 #ifdef ORMPP_ENABLE_SQLITE3
+
 namespace ormpp_sqlite {
 REGISTER_TYPE(int, SQLITE_INTEGER)
 
@@ -169,8 +181,12 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
     return s;
 }
 } // namespace ormpp_sqlite
+
 #endif
+
+
 #ifdef ORMPP_ENABLE_PG
+
 namespace ormpp_postgresql {
 REGISTER_TYPE(bool, BOOLOID)
 
@@ -233,6 +249,7 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
     return "varchar(" + std::to_string(N) + ")";
 }
 } // namespace ormpp_postgresql
+
 #endif
 } // namespace ormpp
 

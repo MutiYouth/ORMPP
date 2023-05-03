@@ -129,6 +129,15 @@ constexpr size_t size(T (&)[N]) {
     return N;
 }
 
+
+// https://github.com/qicosmos/ormpp/commits/master?after=a2a9d0963fe8f7123da4a701c7368d9e17ee516c+244&branch=master&qualified_name=refs%2Fheads%2Fmaster
+
+struct test_order {
+    int id;
+    std::string name;
+};
+REFLECTION(test_order, name, id);
+
 struct dummy
 {
     int id;
@@ -136,7 +145,25 @@ struct dummy
 };
 REFLECTION(dummy, id, name);
 
+
+
 #ifdef ORMPP_ENABLE_MYSQL
+
+TEST_CASE(random_reflection_order)
+{
+    dbng<mysql> mysql;
+    TEST_REQUIRE(mysql.connect(ip, "root", "12345", "testdb", /*timeout_seconds=*/5, 3306));
+    TEST_REQUIRE(mysql.execute("create table if not exists `test_order` (id int, name text);"));
+    mysql.delete_records<test_order>();
+    int id = 666;
+    std::string name = "hello";
+    mysql.insert(test_order { id, name });
+    auto v = mysql.query<test_order>();
+    TEST_REQUIRE(v.size() > 0);
+    TEST_CHECK(v.front().id == id);
+    TEST_CHECK(v.front().name == name);
+}
+
 TEST_CASE(mysql_exist_tb) {
     dbng<mysql> mysql;
     TEST_REQUIRE(mysql.connect(ip, db_user_mysql, db_pwd, db_name, 3306, /*timeout_seconds=*/5));
@@ -846,3 +873,39 @@ TEST_CASE(orm_aop) {
     TEST_REQUIRE(r);
     */
 }
+
+
+// support blob data type for mysql
+#ifdef ORMPP_ENABLE_MYSQL
+struct Image
+{
+    int id;
+    ormpp::blob bin;
+};
+
+REFLECTION(Image, id, bin);
+
+TEST_CASE(orm_mysql_blob) {
+    dbng<mysql> mysql;
+
+    TEST_REQUIRE(mysql.connect("127.0.0.1", "root", "", "testdb"));
+    TEST_REQUIRE(mysql.execute("DROP TABLE IF EXISTS Image"));
+
+    TEST_REQUIRE(mysql.create_datatable<Image>());
+
+    auto data = "this is a  test binary stream\0, and ?...";
+    auto size = 42;
+
+    Image img;
+    img.id = 1;
+    img.bin.assign(data, data + size);
+
+    TEST_REQUIRE(mysql.insert(img) == 1);
+
+    auto result = mysql.query<Image>("id=1");
+    TEST_REQUIRE(result.size() == 1);
+    TEST_REQUIRE(result[0].bin.size() == size);
+}
+
+#endif
+

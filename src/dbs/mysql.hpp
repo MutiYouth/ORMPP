@@ -16,6 +16,8 @@
 
 namespace ormpp {
 
+using blob = ormpp_mysql::blob;
+
 class mysql
 {
 public:
@@ -210,13 +212,14 @@ public:
             return {};
         }
 
+        auto guard = GuardStatement_MYSQL(stmt_);
+
         if (mysql_stmt_prepare(stmt_, sql.c_str(), (int) sql.size())) {
             fprintf(stderr, "%s\n", mysql_error(con_));
             has_error_ = true;
             return {};
         }
 
-        auto guard = GuardStatement_MYSQL(stmt_);
 
         std::array<MYSQL_BIND, result_size<T>::value> param_binds = {};
         std::list<std::vector<char>> mp;
@@ -241,27 +244,34 @@ public:
                                  index++;
                              }
                              else if constexpr (iguana::is_reflection_v<U>) {
-                                 iguana::for_each(item, [&param_binds, &mp, &item, &index](auto &ele,
-                                                                                           auto i) {
-                                     using U = std::remove_reference_t<decltype(std::declval<U>().*ele)>;
-                                     if constexpr (std::is_arithmetic_v<U>) {
-                                         param_binds[index].buffer_type = (enum_field_types) ormpp_mysql::type_to_id(identity<U>{});
+                                 iguana::for_each(item, [&param_binds, &mp, &item, &index](auto &ele, auto /*i*/) {
+                                     using V = std::remove_reference_t<decltype(std::declval<U>().*ele)>;
+                                     if constexpr (std::is_arithmetic_v<V>) {
+                                         param_binds[index].buffer_type = (enum_field_types) ormpp_mysql::type_to_id(identity<V>{});
                                          param_binds[index].buffer = &(item.*ele);
                                      }
-                                     else if constexpr (std::is_same_v<std::string, U>) {
+                                     else if constexpr (std::is_same_v<std::string, V>) {
                                          std::vector<char> tmp(65536, 0);
                                          mp.emplace_back(std::move(tmp));
                                          param_binds[index].buffer_type = MYSQL_TYPE_STRING;
                                          param_binds[index].buffer = &(mp.back()[0]);
                                          param_binds[index].buffer_length = 65536;
                                      }
-                                     else if constexpr (is_char_array_v<U>) {
-                                         std::vector<char> tmp(sizeof(U), 0);
+                                     else if constexpr (is_char_array_v<V>) {
+                                         std::vector<char> tmp(sizeof(V), 0);
                                          mp.emplace_back(std::move(tmp));
                                          param_binds[index].buffer_type = MYSQL_TYPE_VAR_STRING;
                                          param_binds[index].buffer = &(mp.back()[0]);
-                                         param_binds[index].buffer_length = (unsigned long) sizeof(U);
+                                         param_binds[index].buffer_length = (unsigned long) sizeof(V);
                                      }
+                                     else if constexpr (std::is_same_v<blob, U>) {
+                                         std::vector<char> tmp(65536, 0);
+                                         mp.emplace_back(std::move(tmp));
+                                         param_binds[index].buffer_type = MYSQL_TYPE_BLOB;
+                                         param_binds[index].buffer = &(mp.back()[0]);
+                                         param_binds[index].buffer_length = 65536;
+                                     }
+
                                      index++;
                                  });
                              }
@@ -271,6 +281,14 @@ public:
                                  mp.emplace_back(std::move(tmp));
                                  param_binds[index].buffer = &(mp.back()[0]);
                                  param_binds[index].buffer_length = (unsigned long) sizeof(U);
+                                 index++;
+                             }
+                             else if constexpr (std::is_same_v<blob, U>) {
+                                 std::vector<char> tmp(65536, 0);
+                                 mp.emplace_back(std::move(tmp));
+                                 param_binds[index].buffer_type = MYSQL_TYPE_BLOB;
+                                 param_binds[index].buffer = &(mp.back()[0]);
+                                 param_binds[index].buffer_length = 65536;
                                  index++;
                              }
                              else {
@@ -291,8 +309,9 @@ public:
         }
 
         while (mysql_stmt_fetch(stmt_) == 0) {
+            auto column = 0;
             auto it = mp.begin();
-            iguana::for_each(tp, [/*&mp,*/ &it](auto &item, auto i) {
+            iguana::for_each(tp, [/*&mp,*/ &it, &column, this](auto &item, auto i) {
                                  using U = std::remove_reference_t<decltype(item)>;
                                  if constexpr (std::is_same_v<std::string, U>) {
                                      item = std::string(&(*it)[0], strlen((*it).data()));
@@ -302,7 +321,8 @@ public:
                                      memcpy(item, &(*it)[0], sizeof(U));
                                  }
                                  else if constexpr (iguana::is_reflection_v<U>) {
-                                     iguana::for_each(item, [&it, &item](auto ele, auto i) {
+                                     iguana::for_each(item, [&it, &item, &column, this](auto ele, auto i)
+                                     {
                                          using V = std::remove_reference_t<decltype(std::declval<U>().*ele)>;
                                          if constexpr (std::is_same_v<std::string, V>) {
                                              item.*ele = std::string(&(*it)[0], strlen((*it).data()));
@@ -311,8 +331,19 @@ public:
                                          else if constexpr (is_char_array_v<V>) {
                                              memcpy(item.*ele, &(*it)[0], sizeof(V));
                                          }
+                                         else if constexpr (std::is_same_v<blob, V>) {
+                                             item.assign((*it).data(), (*it).data() + get_blob_len(column));
+                                             it++;
+                                         }
                                      });
+                                     ++column;
+                                     return;
                                  }
+                                 else if constexpr (std::is_same_v<blob, U>) {
+                                     item.assign((*it).data(), (*it).data() + get_blob_len(column));
+                                     it++;
+                                 }
+                                 ++column;
                              },
                              std::make_index_sequence<SIZE>{});
 
@@ -335,12 +366,13 @@ public:
             return {};
         }
 
+        auto guard = GuardStatement_MYSQL(stmt_);
+
         if (mysql_stmt_prepare(stmt_, sql.c_str(), (unsigned long) sql.size())) {
             has_error_ = true;
             return {};
         }
 
-        auto guard = GuardStatement_MYSQL(stmt_);
 
         std::array<MYSQL_BIND, SIZE> param_binds = {};
         std::map<size_t, std::vector<char>> mp;
@@ -372,6 +404,15 @@ public:
                 param_binds[Idx].buffer_length = (unsigned long) sizeof(U);
                 index++;
             }
+            else if constexpr (std::is_same_v<blob, U>) {
+                std::vector<char> tmp(65536, 0);
+                mp.emplace(decltype(i)::value, std::move(tmp));
+                param_binds[index].buffer_type = MYSQL_TYPE_BLOB;
+                param_binds[index].buffer = &(mp.rbegin()->second[0]);
+                param_binds[index].buffer_length = 65536;
+                index++;
+            }
+
         });
 
         if (index == 0) {
@@ -389,7 +430,8 @@ public:
         }
 
         while (mysql_stmt_fetch(stmt_) == 0) {
-            iguana::for_each(t, [&mp, &t](auto item, auto i) {
+            auto column = 0;
+            iguana::for_each(t, [&mp, &t, &column, this](auto item, auto i) {
                 using U = std::remove_reference_t<decltype(std::declval<T>().*item)>;
                 if constexpr (std::is_same_v<std::string, U>) {
                     auto &vec = mp[decltype(i)::value];
@@ -399,6 +441,12 @@ public:
                     auto &vec = mp[decltype(i)::value];
                     memcpy(t.*item, vec.data(), vec.size());
                 }
+                else if constexpr (std::is_same_v<blob, U>) {
+                    auto& vec = mp[decltype(i)::value];
+                    t.*item = blob(
+                            vec.data(), vec.data() + get_blob_len(column));
+                }
+                ++column;
             });
 
             for (auto &p: mp) {
@@ -415,6 +463,23 @@ public:
         }
 
         return v;
+    }
+
+    int get_blob_len(int column) {
+        unsigned long data_len = 0;
+
+        MYSQL_BIND param;
+        memset(&param, 0, sizeof(MYSQL_BIND));
+        param.length = &data_len;
+        param.buffer_type = MYSQL_TYPE_BLOB;
+
+        auto retcode = mysql_stmt_fetch_column(stmt_, &param, column, 0);
+        if (retcode != 0) {
+            set_last_error(mysql_stmt_error(stmt_));
+            return 0;
+        }
+
+        return static_cast<int>(data_len);
     }
 
     bool has_error() {
@@ -562,6 +627,11 @@ private:
             param.buffer_type = MYSQL_TYPE_STRING;
             param.buffer = (void *) (value);
             param.buffer_length = (unsigned long) strlen(value);
+        }
+        else if constexpr (std::is_same_v<blob, U>) {
+            param.buffer_type = MYSQL_TYPE_BLOB;
+            param.buffer = (void*)(value.data());
+            param.buffer_length = (unsigned long)value.size();
         }
         param_binds.push_back(param);
     }
