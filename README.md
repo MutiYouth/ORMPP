@@ -85,7 +85,7 @@ make install
 ```
 
 ##  Using postgresql
-postgresql.hpp编译过程中，如果`postgresql/libpq-fe.h`找不到，可尝试安装libpq：
+postgresql.hpp编译过程中，如果`postgresql/libpq-fe.h`找不到，可尝试安装`libpq`：
 ```
 apt-get install libpq-dev
 ```
@@ -118,7 +118,7 @@ Original parts is Apache License, others parts is MIT.
 
 # Contact
 Current Branch:<br/>
-[ORMPP](https://github.com/MutiYouth/ormpp) @ 
+[ORMPP](https://github.com/MutiYouth/ORMPP) @ 
 WENG, Start From 22.8.
 
 Original Author:
