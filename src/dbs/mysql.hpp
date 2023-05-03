@@ -264,12 +264,16 @@ public:
                                          param_binds[index].buffer = &(mp.back()[0]);
                                          param_binds[index].buffer_length = (unsigned long) sizeof(V);
                                      }
-                                     else if constexpr (std::is_same_v<blob, U>) {
+                                     else if constexpr (std::is_same_v<blob, V>) {
                                          std::vector<char> tmp(65536, 0);
                                          mp.emplace_back(std::move(tmp));
                                          param_binds[index].buffer_type = MYSQL_TYPE_BLOB;
                                          param_binds[index].buffer = &(mp.back()[0]);
                                          param_binds[index].buffer_length = 65536;
+                                     }
+                                     else {
+                                         // std::cout << typeid(V).name() << std::endl;
+                                         static_assert(!sizeof(V), "not support");
                                      }
 
                                      index++;
@@ -292,7 +296,8 @@ public:
                                  index++;
                              }
                              else {
-                                 std::cout << typeid(U).name() << std::endl;
+                                 // std::cout << typeid(U).name() << std::endl;
+                                 static_assert(!sizeof(U), "not support");
                              }
                          },
                          std::make_index_sequence<SIZE>{});
@@ -313,7 +318,10 @@ public:
             auto it = mp.begin();
             iguana::for_each(tp, [/*&mp,*/ &it, &column, this](auto &item, auto i) {
                                  using U = std::remove_reference_t<decltype(item)>;
-                                 if constexpr (std::is_same_v<std::string, U>) {
+                                 if constexpr (std::is_arithmetic_v<U>) {
+                                     // return; // don't return, need ++column at end.
+                                 }
+                                 else if constexpr (std::is_same_v<std::string, U>) {
                                      item = std::string(&(*it)[0], strlen((*it).data()));
                                      it++;
                                  }
@@ -321,10 +329,13 @@ public:
                                      memcpy(item, &(*it)[0], sizeof(U));
                                  }
                                  else if constexpr (iguana::is_reflection_v<U>) {
-                                     iguana::for_each(item, [&it, &item, &column, this](auto ele, auto i)
+                                     iguana::for_each(item, [&it, &item, &column, this](auto ele, auto /*i*/)
                                      {
                                          using V = std::remove_reference_t<decltype(std::declval<U>().*ele)>;
-                                         if constexpr (std::is_same_v<std::string, V>) {
+                                         if constexpr (std::is_arithmetic_v<V>) {
+                                             // item.*ele = *(V *)(&(*it)[0]);
+                                         }
+                                         else if constexpr (std::is_same_v<std::string, V>) {
                                              item.*ele = std::string(&(*it)[0], strlen((*it).data()));
                                              it++;
                                          }
@@ -332,11 +343,11 @@ public:
                                              memcpy(item.*ele, &(*it)[0], sizeof(V));
                                          }
                                          else if constexpr (std::is_same_v<blob, V>) {
-                                             item.assign((*it).data(), (*it).data() + get_blob_len(column));
+                                             (item.*ele).assign((*it).data(), (*it).data() + get_blob_len(column));
                                              it++;
                                          }
+                                         ++column;
                                      });
-                                     ++column;
                                      return;
                                  }
                                  else if constexpr (std::is_same_v<blob, U>) {
