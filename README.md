@@ -4,7 +4,7 @@
 <p align="center">
 
 <a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml">
-<img alt="ci-sqlite" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml/badge.svg?branch=master">
+<img alt="ci-sqlite" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml/badge.svg">
 </a>
 
 <a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml">
@@ -12,7 +12,7 @@
 </a>
 
 <a href="https://codecov.io/gh/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml">
-<img alt="codecov" src="https://codecov.io/gh/MutiYouth/ORMPP/branch/master/graph/badge.svg">
+<img alt="codecov" src="https://codecov.io/gh/MutiYouth/ORMPP/branch/feature/github_actions/graph/badge.svg">
 </a>
 
 <img alt="language" src="https://img.shields.io/github/languages/top/MutiYouth/ORMPP?style=flat-square">
