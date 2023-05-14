@@ -61,25 +61,26 @@ endif ()
 
 
 ######################################################
+set(test_main_example ${CMAKE_PROJECT_NAME})
 ## add test
 include_directories(
         ${CMAKE_SOURCE_DIR}/thirdparty/iguana
 )
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
+add_executable( ${test_main_example} ${SOURCE_FILES})
 
 # link libraries
 if (ENABLE_MYSQL)
     if (MSVC)
-        target_link_libraries(${CMAKE_PROJECT_NAME} libmysql)
+        target_link_libraries(${test_main_example} libmysql)
     else ()
-        target_link_libraries(${CMAKE_PROJECT_NAME} mysqlclient)
+        target_link_libraries(${test_main_example} mysqlclient)
     endif ()
 endif ()
 if (ENABLE_SQLITE3)
-    target_link_libraries(${CMAKE_PROJECT_NAME} sqlite3)
+    target_link_libraries(${test_main_example} sqlite3)
 endif ()
 if (ENABLE_PG)
-    target_link_libraries(${CMAKE_PROJECT_NAME} pq)
+    target_link_libraries(${test_main_example} pq)
 endif ()
 
 
