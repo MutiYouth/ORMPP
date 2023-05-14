@@ -1,6 +1,12 @@
-name: ormpp cmake ci
+name: ci
 
-on: [push, pull_request]
+# on: [push, pull_request]
+on:
+  push:
+    branches: [ feature/github_actions ]
+  pull_request:
+    branches: [ feature/github_actions ]
+
 
 #env:
 #  CMAKE_VERSION: 3.24.3
@@ -40,6 +46,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        # 如果主题作为子模块存在于主仓库中，需要submodules：recursive，也就是递归检出
+        submodules: true
+        # Fetch all history for .GitInfo and .Lastmod
+        fetch-depth: 0
 
     - name: Download Ninja and CMake
       shell: cmake -P {0}
@@ -225,6 +236,10 @@ jobs:
 
     - name: Install Strip
       run: cmake --install build --prefix instdir --strip
+
+    # 打印当前工作目录
+    - name: Run a one-line script
+      run: pwd
 
 
     - name: Pack
