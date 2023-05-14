@@ -8,11 +8,12 @@ on:
     branches: [ feature/github_actions ]
 
 
-#env:
-#  CMAKE_VERSION: 3.24.3
-#  NINJA_VERSION: 1.11.1
-#  BUILD_TYPE: Release
-#  CCACHE_VERSION: 4.7.3
+env:
+  CMAKE_VERSION: 3.24.3
+  NINJA_VERSION: 1.11.1
+  BUILD_TYPE: Release
+  CCACHE_VERSION: 4.7.3
+
 
 jobs:
   build:
@@ -22,17 +23,17 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - {
-            name: "Windows Latest MSVC", artifact: "Windows-MSVC.7z",
-            os: windows-latest,
-            cc: "cl", cxx: "cl",
-            environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          }
-        - {
-            name: "Windows Latest MinGW", artifact: "Windows-MinGW.7z",
-            os: windows-latest,
-            cc: "gcc", cxx: "g++"
-          }
+#        - {
+#            name: "Windows Latest MSVC", artifact: "Windows-MSVC.7z",
+#            os: windows-latest,
+#            cc: "cl", cxx: "cl",
+#            environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+#          }
+#        - {
+#            name: "Windows Latest MinGW", artifact: "Windows-MinGW.7z",
+#            os: windows-latest,
+#            cc: "gcc", cxx: "g++"
+#          }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux.7z",
             os: ubuntu-latest,
@@ -47,10 +48,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
+        # https://cloud.tencent.com/developer/article/1996763
         # 如果主题作为子模块存在于主仓库中，需要submodules：recursive，也就是递归检出
         submodules: recursive
         # Fetch all history for .GitInfo and .Lastmod
         # fetch-depth: 0
+
+    # 打印当前工作目录
+    - name: Run a one-line script
+      run: ls -lh -a
+
 
     - name: Download Ninja and CMake
       shell: cmake -P {0}
