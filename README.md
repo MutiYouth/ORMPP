@@ -1,4 +1,27 @@
 # A Very Cool Modern C++ ORM LIB ---- ORMPP
+
+
+<p align="center">
+
+<a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml">
+<img alt="ci-sqlite" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml/badge.svg">
+</a>
+
+<a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml">
+<img alt="github ci" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml/badge.svg">
+</a>
+
+<a href="https://codecov.io/gh/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml">
+<img alt="codecov" src="https://codecov.io/gh/MutiYouth/ORMPP/branch/feature/github_actions/graph/badge.svg">
+</a>
+
+<img alt="language" src="https://img.shields.io/github/languages/top/MutiYouth/ORMPP?style=flat-square">
+
+<img alt="last commit" src="https://img.shields.io/github/last-commit/MutiYouth/ORMPP?style=flat-square">
+</p>
+
+
+
 ## ORMPP's targets
 ormpp最重要的目标就是让c++中的数据库编程变得简单，为用户提供统一的接口，支持多种数据库，降低用户使用数据库的难度。
 

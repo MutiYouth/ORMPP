@@ -91,11 +91,13 @@ inline constexpr auto get_type_names(DBType type) {
             s = ormpp_mysql::type_to_name(identity<U>{});
         }
 #endif
+
 #ifdef ORMPP_ENABLE_SQLITE3
         else if (type == DBType::sqlite) {
             s = ormpp_sqlite::type_to_name(identity<U>{});
         }
 #endif
+
 #ifdef ORMPP_ENABLE_PG
         else if (type == DBType::postgresql) {
             s = ormpp_postgresql::type_to_name(identity<U>{});

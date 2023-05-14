@@ -1,0 +1,88 @@
+name: ci-mysql
+
+# on: [push, pull_request]
+# forked form: https://github.com/qicosmos/ormpp/blob/master/.github/workflows/ci-mysql.yml
+
+on:
+  push:
+    branches: [ feature/github_actions ]
+  pull_request:
+    branches: [ feature/github_actions ]
+
+jobs:
+  build-and-test:
+
+    name: ${{ matrix.os }} (${{ matrix.configuration }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [ Debug ]  # , Release
+        os: [ ubuntu-latest ]  # , macos-latest, windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup MySQL
+        uses: ankane/setup-mysql@v1
+        with:
+          mysql-version: 8.0
+          database: test
+
+      - name: Verify MySQL
+        run:  mysql -uroot -e'show databases;'
+
+      - name: Configure cmake
+        run:  cmake -B${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DENABLE_MYSQL=ON -DCOVERAGE_TEST=ON -DBUILD_TEST=ON
+
+      - name: Build
+        run:  cmake --build ${{github.workspace}}/build --config ${{ matrix.configuration }}
+
+
+      - name: Run Test
+        working-directory: ${{github.workspace}}/build
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: ctest -C ${{ matrix.configuration }} -j `nproc` -V
+
+
+
+      - name: PRINT DIR OF CURRENT
+        run: |
+          if [[${{ matrix.os }} != "windows-latest" ]] && [[ ${{ matrix.os }} != "macos-latest" ]];
+          then
+            cd ${{github.workspace}}/build/test/test_main_example && pwd && ls -lh -a
+          elif [[ ${{ matrix.os }} == "macos-latest" ]];
+          then
+             cd ${{github.workspace}}/build && ls
+          else
+             cd ${{github.workspace}}/build && dir
+          fi
+
+#      - name: run test
+#        shell: bash
+#        run: .${{github.workspace}}/build/test/test_main_example/test_ormpp
+
+#      - name: lcov collection
+#        shell: bash
+#        run: |
+#          cd build
+#          lcov -c -d ./ -o cover.info
+
+#      - uses: arduino/cpp-test-action@v1
+#        with:
+#          coverage-data-path: ${{ env.COVERAGE_DATA_PATH }}
+#          source-path: ./
+#          build-path: build
+#          runtime-paths: build/tests/test_hellocov
+
+
+      # Optional: upload coverage report to codecov.io
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: build/cover.info
