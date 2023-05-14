@@ -3,8 +3,8 @@
 
 <p align="center">
 
-<a href="https://github.com/MutiYouth/ORMPP/actions/workflows/build_cmake.yml">
-<img alt="github ci" src="https://github.com/MutiYouth/ORMPP/actions/workflows/build_cmake.yml/badge.svg">
+<a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml">
+<img alt="github ci" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml/badge.svg">
 </a>
 
 <a href="https://codecov.io/gh/MutiYouth/ORMPP">

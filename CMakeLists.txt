@@ -6,6 +6,9 @@ project(ORMPP)
 ## settings
 option(BUILD_XORM "Build xorm" OFF)
 option(BUILD_TEST "Build test" OFF)
+option(ENABLE_MYSQL "enable mysql" OFF)
+option(ENABLE_PG "enable pg" OFF)
+option(ENABLE_SQLITE3 "enable sqlite3" OFF)
 
 set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
 set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE PATH "Installation directory for executables")
@@ -15,9 +18,9 @@ message(STATUS "compiler: " ${CMAKE_CXX_COMPILER_ID})
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++20")  # use c++20, because of iguana used.
-set(ENABLE_MYSQL ON)
-set(ENABLE_PG ON)
-set(ENABLE_SQLITE3 ON)
+#set(ENABLE_MYSQL OFF)
+#set(ENABLE_PG OFF)
+#set(ENABLE_SQLITE3 OFF)
 
 # Make our own cmake imports accessible
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -45,16 +48,19 @@ set(SOURCE_FILES
         test/test_main_example/main.cpp
         )
 if (ENABLE_MYSQL)
+    message("build with mysql")
     add_definitions(-DORMPP_ENABLE_MYSQL)
     list(APPEND SOURCE_FILES src/dbs/mysql.hpp)
 endif ()
 
 if (ENABLE_SQLITE3)
+    message("build with sqlite3")
     add_definitions(-DORMPP_ENABLE_SQLITE3)
     list(APPEND SOURCE_FILES src/dbs/sqlite.hpp)
 endif ()
 
 if (ENABLE_PG)
+    message("build with pg")
     add_definitions(-DORMPP_ENABLE_PG)
     list(APPEND SOURCE_FILES src/dbs/postgresql.hpp)
 endif ()
@@ -68,6 +74,7 @@ include_directories(
 )
 add_executable( ${test_main_example} ${SOURCE_FILES})
 
+
 # link libraries
 if (ENABLE_MYSQL)
     if (MSVC)
@@ -76,9 +83,11 @@ if (ENABLE_MYSQL)
         target_link_libraries(${test_main_example} mysqlclient)
     endif ()
 endif ()
+
 if (ENABLE_SQLITE3)
     target_link_libraries(${test_main_example} sqlite3)
 endif ()
+
 if (ENABLE_PG)
     target_link_libraries(${test_main_example} pq)
 endif ()
