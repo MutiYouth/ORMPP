@@ -50,7 +50,7 @@ jobs:
 
       - name: run test
         shell: bash
-        run: ./build/test/test_main_example/test_ormpp
+        run: ./${{github.workspace}}/build/test/test_main_example/test_ormpp
 
       - name: lcov collection
         shell: bash

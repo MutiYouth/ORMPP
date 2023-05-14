@@ -18,8 +18,11 @@ set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE PATH "Installation dir
 message("mark, CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}\n\n")
 message(STATUS "compiler: " ${CMAKE_CXX_COMPILER_ID})
 
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++20")  # use c++20, because of iguana used.
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++20")  # use c++20, because of iguana used.
+endif()
 #set(ENABLE_MYSQL OFF)
 #set(ENABLE_PG OFF)
 #set(ENABLE_SQLITE3 OFF)
@@ -51,6 +54,7 @@ set(SOURCE_FILES
         )
 if (ENABLE_MYSQL)
     message("build with mysql")
+    include(cmake/mysql.cmake)
     add_definitions(-DORMPP_ENABLE_MYSQL)
     list(APPEND SOURCE_FILES src/dbs/mysql.hpp)
 endif ()
@@ -87,10 +91,14 @@ add_executable( ${test_main_example} ${SOURCE_FILES})
 
 # link libraries
 if (ENABLE_MYSQL)
+#    if (MSVC)
+#        target_link_libraries(${test_main_example} libmysql)
+#    else ()
+#        target_link_libraries(${test_main_example} mysqlclient)
+#    endif ()
+    target_link_libraries(${PROJECT_NAME} ${MYSQL_LIBRARY})
     if (MSVC)
-        target_link_libraries(${test_main_example} libmysql)
-    else ()
-        target_link_libraries(${test_main_example} mysqlclient)
+        set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "/MD")
     endif ()
 endif ()
 

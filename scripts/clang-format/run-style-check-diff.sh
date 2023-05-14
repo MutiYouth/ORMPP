@@ -7,8 +7,9 @@ set +e
 git remote add upstream https://github.com/MutiYouth/ORMPP.git
 git fetch upstream
 
-echo "mark of header: " ${GITHUB_HEAD_REF}
-echo "mark of header2: " ${GITHUB_BASE_REF}
+#echo "mark of header: " ${GITHUB_HEAD_REF}
+#echo "mark of header2: " ${GITHUB_BASE_REF}
+
 # on github we are somehow not on the branch itself but in detached HEAD state.
 # in order to run the check below we need to checkout our branch.
 git checkout ${GITHUB_HEAD_REF}
