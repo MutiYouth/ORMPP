@@ -4,14 +4,15 @@
 
 // mysql
 #ifdef _MSC_VER
+
 #ifdef ORMPP_ENABLE_MYSQL
-#include <include/mysql.h>
+#include <mysql.h>
 #endif
 
 #else
 #ifdef ORMPP_ENABLE_MYSQL
 
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 #endif
 
