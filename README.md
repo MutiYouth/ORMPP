@@ -11,7 +11,7 @@
 <img alt="github ci" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml/badge.svg">
 </a>
 
-<a href="https://codecov.io/gh/MutiYouth/ORMPP">
+<a href="https://codecov.io/gh/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml">
 <img alt="codecov" src="https://codecov.io/gh/MutiYouth/ORMPP/branch/master/graph/badge.svg">
 </a>
 

@@ -54,7 +54,8 @@ jobs:
 #          }
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
       with:
         # https://cloud.tencent.com/developer/article/1996763
         # 如果主题作为子模块存在于主仓库中，需要submodules：recursive，也就是递归检出

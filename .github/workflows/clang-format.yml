@@ -24,4 +24,4 @@ jobs:
           clang-format --version
 
       - name: clang format check
-        run: bash script/clang-format/run-style-check-diff.sh
+        run: bash scripts/clang-format/run-style-check-diff.sh

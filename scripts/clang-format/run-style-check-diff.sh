@@ -17,12 +17,12 @@ git checkout ${GITHUB_HEAD_REF}
 newest_common_ancestor_sha=$(git merge-base ${GITHUB_HEAD_REF} upstream/${GITHUB_BASE_REF})
 
 # run the format-code - and count the lines
-lines_diff_count=$(script/clang-format/git-clang-format.py --diff ${newest_common_ancestor_sha} | wc -l)
+lines_diff_count=$(scripts/clang-format/git-clang-format.py --diff ${newest_common_ancestor_sha} | wc -l)
 
 # in case of no diff we return a one-liner
 if [ ${lines_diff_count} -gt 1 ]; then
 	echo "Format difference report:"
-	script/clang-format/git-clang-format.py --diff ${newest_common_ancestor_sha}
+	scripts/clang-format/git-clang-format.py --diff ${newest_common_ancestor_sha}
 	exit 1
 else
 	exit 0

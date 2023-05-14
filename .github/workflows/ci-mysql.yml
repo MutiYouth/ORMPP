@@ -23,7 +23,9 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Setup MySQL
         uses: ankane/setup-mysql@v1
