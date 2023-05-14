@@ -37,8 +37,8 @@
 
 using namespace std::string_view_literals;
 
-#ifndef EXAMPLE1_TYPE_MAPPING_HPP
-#define EXAMPLE1_TYPE_MAPPING_HPP
+// #ifndef EXAMPLE1_TYPE_MAPPING_HPP
+// #define EXAMPLE1_TYPE_MAPPING_HPP
 
 namespace ormpp {
 template<class T>
@@ -128,7 +128,9 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
 
 #ifdef ORMPP_ENABLE_SQLITE3
 
+
 namespace ormpp_sqlite {
+
 REGISTER_TYPE(int, SQLITE_INTEGER)
 
 REGISTER_TYPE(double, SQLITE_FLOAT)
@@ -137,8 +139,7 @@ inline int type_to_id(identity<std::string>) noexcept {
     return SQLITE_TEXT;
 }
 
-inline std::string
-id_to_type(std::integral_constant<std::size_t, SQLITE_TEXT>) noexcept {
+inline std::string id_to_type(std::integral_constant<std::size_t, SQLITE_TEXT>) noexcept {
     std::string res{};
     return res;
 }
@@ -172,6 +173,11 @@ inline constexpr auto type_to_name(identity<int64_t>) noexcept {
 }
 
 inline auto type_to_name(identity<std::string>) noexcept {
+    return "TEXT"sv;
+}
+
+// weng todo: need to check this value. 23.5.14
+inline auto type_to_name(identity<std::vector<char>>) noexcept {
     return "TEXT"sv;
 }
 
@@ -244,6 +250,11 @@ inline auto type_to_name(identity<std::string>) noexcept {
     return "text"sv;
 }
 
+// weng todo: need to check this value. 23.5.14
+inline auto type_to_name(identity<std::vector<char>>) noexcept {
+    return "text"sv;
+}
+
 template<size_t N>
 inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
     return "varchar(" + std::to_string(N) + ")";
@@ -253,4 +264,4 @@ inline constexpr auto type_to_name(identity<std::array<char, N>>) noexcept {
 #endif
 } // namespace ormpp
 
-#endif // EXAMPLE1_TYPE_MAPPING_HPP
+// #endif // EXAMPLE1_TYPE_MAPPING_HPP

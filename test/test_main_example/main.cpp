@@ -14,23 +14,23 @@
 #include <thread>
 
 
-#include "../src/core/connection_pool.hpp"
-#include "../src/core/dbng.hpp"
-#include "../src/core/ormpp_cfg.hpp"
+#include "../../src/core/connection_pool.hpp"
+#include "../../src/core/dbng.hpp"
+#include "../../src/core/ormpp_cfg.hpp"
 
 #ifdef ORMPP_ENABLE_MYSQL
 
-#include "../src/dbs/mysql.hpp"
+#include "../../src/dbs/mysql.hpp"
 
 #endif
 #ifdef ORMPP_ENABLE_SQLITE3
 
-#include "../src/dbs/sqlite.hpp"
+#include "../../src/dbs/sqlite.hpp"
 
 #endif
 #ifdef ORMPP_ENABLE_PG
 
-#include "../src/dbs/postgresql.hpp"
+#include "../../src/dbs/postgresql.hpp"
 
 #endif
 
