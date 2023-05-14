@@ -9,6 +9,8 @@ option(BUILD_TEST "Build test" OFF)
 option(ENABLE_MYSQL "enable mysql" OFF)
 option(ENABLE_PG "enable pg" OFF)
 option(ENABLE_SQLITE3 "enable sqlite3" OFF)
+option(COVERAGE_TEST "Build with unit test coverage" OFF)
+
 
 set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
 set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE PATH "Installation directory for executables")
@@ -64,6 +66,14 @@ if (ENABLE_PG)
     add_definitions(-DORMPP_ENABLE_PG)
     list(APPEND SOURCE_FILES src/dbs/postgresql.hpp)
 endif ()
+
+if(COVERAGE_TEST)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage --coverage")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    endif()
+endif()
 
 
 ######################################################

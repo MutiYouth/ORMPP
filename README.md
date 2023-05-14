@@ -3,6 +3,10 @@
 
 <p align="center">
 
+<a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml">
+<img alt="ci-sqlite" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci-mysql.yml/badge.svg?branch=master">
+</a>
+
 <a href="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml">
 <img alt="github ci" src="https://github.com/MutiYouth/ORMPP/actions/workflows/ci.yml/badge.svg">
 </a>
