@@ -340,7 +340,7 @@ jobs:
 
   publish:
     if: contains(github.ref, 'tags/v')
-    name: ${{ matrix.config.name }}
+    name: publish-${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false

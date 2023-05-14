@@ -82,10 +82,16 @@ endif()
 
 ######################################################
 set(test_main_example ${CMAKE_PROJECT_NAME})
+
 ## add test
+set(include_dirs_lst ${CMAKE_SOURCE_DIR}/thirdparty/iguana)
+if (ENABLE_MYSQL)
+    list(APPEND include_dirs_lst ${MYSQL_INCLUDE_DIR})
+endif ()
 include_directories(
-        ${CMAKE_SOURCE_DIR}/thirdparty/iguana
+        ${include_dirs_lst}
 )
+
 add_executable( ${test_main_example} ${SOURCE_FILES})
 
 
