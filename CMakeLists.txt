@@ -42,7 +42,7 @@ set(SOURCE_FILES
         src/core/connection_pool.hpp
         src/core/ormpp_cfg.hpp
         src/dbs/pg_types.h
-        test/main.cpp
+        test/test_main_example/main.cpp
         )
 if (ENABLE_MYSQL)
     add_definitions(-DORMPP_ENABLE_MYSQL)
